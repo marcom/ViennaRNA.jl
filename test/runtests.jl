@@ -184,10 +184,18 @@ end
 end
 
 @testset "plot_coords" begin
+    function test_plot_xy(s, x, y)
+        @test eltype(x) <: AbstractFloat
+        @test length(x) == length(s)
+        @test eltype(y) <: AbstractFloat
+        @test length(y) == length(s)
+    end
     s = "(((...)))"
     x, y = ViennaRNA.plot_coords(s)
-    @test eltype(x) <: AbstractFloat
-    @test length(x) == length(s)
-    @test eltype(y) <: AbstractFloat
-    @test length(y) == length(s)
+    test_plot_xy(s, x, y)
+    for plot_type in (:simple, :naview, :circular, :turtle, :puzzler)
+        x, y = ViennaRNA.plot_coords(s; plot_type)
+        test_plot_xy(s, x, y)
+    end
+    @test_throws ArgumentError x, y = ViennaRNA.plot_coords(s; plot_type = :unknown)
 end
