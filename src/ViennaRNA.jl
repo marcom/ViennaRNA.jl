@@ -426,8 +426,10 @@ end
 
 # plotting secondary structures
 
-_vrna_plot_coords(structure::AbstractString, cx, cy, type) = LibRNA.vrna_plot_coords(structure, cx, cy, type)
-_vrna_plot_coords(structure::Pairtable, cx, cy, type) = LibRNA.vrna_plot_coords_pt(structure.ptr, cx, cy, type)
+_vrna_plot_coords(structure::AbstractString, cx, cy, type) =
+    LibRNA.vrna_plot_coords(structure, cx, cy, type)
+_vrna_plot_coords(structure::Pairtable, cx, cy, type) =
+    LibRNA.vrna_plot_coords_pt(structure.ptr, cx, cy, type)
 
 function plot_coords(structure; plot_type::Symbol=:naview)
     if plot_type === :simple
@@ -441,7 +443,8 @@ function plot_coords(structure; plot_type::Symbol=:naview)
     elseif plot_type === :puzzler
         type = LibRNA.@VRNA_PLOT_TYPE_PUZZLER
     else
-        throw(ArgumentError("unknown plot_type $plot_type, options are: :simple, :naview, :circular, :turtle, :puzzler"))
+        throw(ArgumentError("unknown plot_type $plot_type, options are:" *
+                            " :simple, :naview, :circular, :turtle, :puzzler"))
     end
     cx = Libc.malloc(Cptr{Cfloat})
     cy = Libc.malloc(Cptr{Cfloat})
