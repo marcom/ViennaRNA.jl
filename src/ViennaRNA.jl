@@ -426,8 +426,10 @@ end
 
 # plotting secondary structures
 
-function plot_coords(structure::AbstractString;
-                     plot_type::Symbol=:naview)
+_vrna_plot_coords(structure::AbstractString, cx, cy, type) = LibRNA.vrna_plot_coords(structure, cx, cy, type)
+_vrna_plot_coords(structure::Pairtable, cx, cy, type) = LibRNA.vrna_plot_coords_pt(structure.ptr, cx, cy, type)
+
+function plot_coords(structure; plot_type::Symbol=:naview)
     if plot_type === :simple
         type = LibRNA.@VRNA_PLOT_TYPE_SIMPLE
     elseif plot_type === :naview
@@ -443,7 +445,7 @@ function plot_coords(structure::AbstractString;
     end
     cx = Libc.malloc(Cptr{Cfloat})
     cy = Libc.malloc(Cptr{Cfloat})
-    n = LibRNA.vrna_plot_coords(structure, cx, cy, type)
+    n = _vrna_plot_coords(structure, cx, cy, type)
     x = [cx[][i] for i = 1:n]
     y = [cy[][i] for i = 1:n]
     Libc.free(cx[])

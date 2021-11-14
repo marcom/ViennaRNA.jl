@@ -191,11 +191,19 @@ end
         @test length(y) == length(s)
     end
     s = "(((...)))"
+    pt = ViennaRNA.Pairtable(s)
+
+    # test: plot_coords(::String), plot_coords(::ViennaRNA.Pairtable)
     x, y = ViennaRNA.plot_coords(s)
     test_plot_xy(s, x, y)
+    x, y = ViennaRNA.plot_coords(pt)
+    test_plot_xy(pt, x, y)
     for plot_type in (:simple, :naview, :circular, :turtle, :puzzler)
         x, y = ViennaRNA.plot_coords(s; plot_type)
         test_plot_xy(s, x, y)
+        x, y = ViennaRNA.plot_coords(pt; plot_type)
+        test_plot_xy(pt, x, y)
     end
     @test_throws ArgumentError x, y = ViennaRNA.plot_coords(s; plot_type = :unknown)
+    @test_throws ArgumentError x, y = ViennaRNA.plot_coords(pt; plot_type = :unknown)
 end
