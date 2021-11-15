@@ -12,4 +12,5 @@ ViennaRNA_jll = "b7a990de-7fa3-5a2e-8a39-d875e4dafecd"
 [compat]
 CBinding = "1.0.8"
 Unitful = "1.9"
+ViennaRNA_jll = "2.5"
 julia = "1.6"

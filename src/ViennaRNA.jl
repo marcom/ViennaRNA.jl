@@ -25,6 +25,7 @@ module LibRNA
         #include "ViennaRNA/mfe.h"
         #include "ViennaRNA/part_func.h"
         #include "ViennaRNA/subopt.h"
+        #include "ViennaRNA/subopt_zuker.h"
         #include "ViennaRNA/inverse.h"
         #include "ViennaRNA/boltzmann_sampling.h"
         #include "ViennaRNA/MEA.h"
