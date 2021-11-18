@@ -446,7 +446,7 @@ function neighbors(fc::FoldCompound, pt::Pairtable;
         push!(moves, mlist)
         i += 1
     end
-    Libc.free(mptr)
+    LibRNA.vrna_move_list_free(mptr)
     return moves
 end
 
