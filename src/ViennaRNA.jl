@@ -9,10 +9,6 @@ module LibRNA
         libdir = dirname(ViennaRNA_jll.libRNA_path)
         c`-std=c11 -fparse-all-comments -I$(incdir) -L$(libdir) -lRNA
           -DVRNA_DISABLE_C11_FEATURES`
-        #c`-fparse-all-comments -I$(incdir) -I$(incdir)/ViennaRNA
-        #  -DVRNA_DISABLE_C11_FEATURES -pthread -fno-lto -Wl,-fno-lto
-        #  -L${libdir} -lRNA -fopenmp -lgsl -lgslcblas -lpthread -lmpfr -lgmp
-        #  -lstdc++`
     end
 
     const c"FILE" = Cvoid
@@ -37,11 +33,8 @@ module LibRNA
         #include "ViennaRNA/plotting/layouts.h"
     """ij
 
-    # TODO: This workaround is needed because otherwise we get an
-    #       error ('ERROR: LoadError: UndefVarError: ViennaRNA not
-    #       defined') from inside a CBinding function. Might be a
-    #       parsing problem of the macro because it's not a simple
-    #       macro but an expression.
+    # TODO: macro definitions that didn't get converted automatically
+    # because they are expressions
     macro VRNA_BRACKETS_ANY()
         :(
             (LibRNA.@VRNA_BRACKETS_RND) |
