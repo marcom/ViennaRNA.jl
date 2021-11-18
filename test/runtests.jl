@@ -183,6 +183,12 @@ end
     @test_throws ArgumentError ViennaRNA.inverse_pf_fold("A", "()")
 end
 
+@testset "neighbors" begin
+    fc = FoldCompound("GGGAAACCC")
+    pt = ViennaRNA.Pairtable(".((...)).")
+    @test ViennaRNA.neighbors(fc, pt) == [[(-2, -8)], [(-3, -7)], [(1, 9)]]
+end
+
 @testset "plot_coords" begin
     function test_plot_xy(s, x, y)
         @test eltype(x) <: AbstractFloat

@@ -30,6 +30,7 @@ module LibRNA
         #include "ViennaRNA/utils/structures.h"
         #include "ViennaRNA/params/basic.h"
         #include "ViennaRNA/params/io.h"
+        #include "ViennaRNA/landscape/neighbor.h"
         #include "ViennaRNA/plotting/layouts.h"
     """ij
 
@@ -43,6 +44,9 @@ module LibRNA
             (LibRNA.@VRNA_BRACKETS_ANG) |
             (LibRNA.@VRNA_BRACKETS_ALPHA)
         )
+    end
+    macro VRNA_MOVESET_DEFAULT()
+        :((LibRNA.@VRNA_MOVESET_INSERTION) | (LibRNA.@VRNA_MOVESET_DELETION))
     end
 end # module LibRNA
 
@@ -417,6 +421,34 @@ function inverse_pf_fold(start::AbstractString, target::AbstractString)
     return design, RT_log_p * en_unit
 end
 
+# kinetics and move sets
+
+function neighbors(fc::FoldCompound, pt::Pairtable;
+                   options::Int=LibRNA.@VRNA_MOVESET_DEFAULT)
+    mptr = LibRNA.vrna_neighbors(fc.ptr, pt.ptr, options)
+    moves = Vector{Tuple{Int,Int}}[]
+    i = 1
+    while mptr[i].pos_5 != 0 && mptr[i].pos_3 != 0
+        mlist = [(mptr[i].pos_5, mptr[i].pos_3)]
+        if mptr[i].next != C_NULL
+            # this move is not an atomic move, so follow the next
+            # pointer and collect all moves
+            next = mptr[i].next
+            j = 1
+            while next[j].pos_5 != 0 && next[j].pos_3 != 0
+                if next[j].next != C_NULL
+                    @warn "unexpected extra branching in neighbors()"
+                end
+                push!(mlist, (next[j].pos_5, next[j].pos_3))
+                j += 1
+            end
+        end
+        push!(moves, mlist)
+        i += 1
+    end
+    Libc.free(mptr)
+    return moves
+end
 
 # plotting secondary structures
 
