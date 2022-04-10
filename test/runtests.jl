@@ -121,18 +121,18 @@ end
 #     @test size(p) == (n,n)
 # end
 
-# @testset "pbacktrack" begin
-#     seq = "GGGGGAAAAACCCCCCCCAUUCA"
-#     fc = FoldCompound(seq; uniq_ML = 1)
-#     ViennaRNA.partfn(fc)
-#     @test length(ViennaRNA.pbacktrack(fc)) == 1
-#     @test length(ViennaRNA.pbacktrack(seq)) == 1
-#     s = ViennaRNA.pbacktrack(fc; num_samples=10)
-#     @test length(s) == 10
-#     s = ViennaRNA.pbacktrack(fc; num_samples=5,
-#                              options=ViennaRNA.LibRNA.VRNA_PBACKTRACK_NON_REDUNDANT)
-#     @test length(s) == 5
-# end
+@testset "pbacktrack" begin
+    seq = "GGGGGAAAAACCCCCCCCAUUCA"
+    fc = FoldCompound(seq; uniq_ML = 1)
+    ViennaRNA.partfn(fc)
+    @test length(ViennaRNA.pbacktrack(fc)) == 1
+    @test length(ViennaRNA.pbacktrack(seq)) == 1
+    s = ViennaRNA.pbacktrack(fc; num_samples=10)
+    @test length(s) == 10
+    s = ViennaRNA.pbacktrack(fc; num_samples=5,
+                             options=ViennaRNA.LibRNA.VRNA_PBACKTRACK_NON_REDUNDANT)
+    @test length(s) == 5
+end
 
 @testset "mea" begin
     seq = "GGGGGAAAAACCCCCCCCAUUCA"

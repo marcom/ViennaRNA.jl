@@ -3,7 +3,8 @@
 # - has_exp_matrices checks
 # - uniq_ML option to FoldCompound()
 # - bpp()
-# - pbacktrack needs uniq_ML != 0
+# - functions that return C_NULL terminated lists via a pointer:
+#   ensure all check for pointer == C_NULL
 
 # - change energy param set
 
@@ -171,18 +172,23 @@ vrna_plot_coords(structure, x, y, plot_type) =
 vrna_plot_coords_pt(pt, x, y, plot_type) =
     @ccall LIB.vrna_plot_coords_pt(pt::Ptr{Cshort}, x::Ptr{Ptr{Cfloat}}, y::Ptr{Ptr{Cfloat}}, plot_type::Cint)::Cint
 
+vrna_md_defaults_uniq_ML(flag) =
+    @ccall LIB.vrna_md_defaults_uniq_ML(flag::Cint)::Cvoid
+
 end # module LibRNA
 
 
 mutable struct FoldCompound
-    seq :: String
-    ptr :: Ptr{LibRNA.vrna_fc_s}
+    ptr     :: Ptr{LibRNA.vrna_fc_s}
+    seq     :: String
+    uniq_ML :: Int
     function FoldCompound(seq::AbstractString,
                           model_details::Ptr{LibRNA.vrna_md_s},
-                          options::Unsigned)
+                          options::Unsigned;
+                          uniq_ML::Integer=0)
         ptr = LibRNA.vrna_fold_compound(seq, model_details, options)
         ptr != C_NULL || throw(ErrorException("pointer == C_NULL"))
-        fc = new(seq, ptr)
+        fc = new(ptr, seq, uniq_ML)
         finalizer(fc) do x
             # TODO: do we have to call vrna_mx_mfe_free or
             #       vrna_mx_pf_free here ourselves?
@@ -194,18 +200,11 @@ end
 function FoldCompound(seq::AbstractString;
                       uniq_ML::Integer=0,
                       options::Unsigned=LibRNA.VRNA_OPTION_DEFAULT)
-    # TODO: who frees md? maybe vrna_fold_compound_free()
-    #       possible memory leak
-    #md = Ptr{vrna_md_s}(C_NULL)
-    md = C_NULL
-    # if uniq_ML != 0
-    #     # TODO: we assume default vrna_md_s has uniq_ML = 0
-    #     error("not implemented")
-    #     #md = Libc.malloc(LibRNA.vrna_md_s)
-    #     #LibRNA.vrna_md_set_default(md)
-    #     #md.uniq_ML[] = uniq_ML
-    # end
-    return FoldCompound(seq, md, options)
+    # TODO: who frees md? hopefully vrna_fold_compound_free()
+    #       otherwise possible memory leak
+    md = Ptr{LibRNA.vrna_md_s}(C_NULL)
+    LibRNA.vrna_md_defaults_uniq_ML(uniq_ML)
+    return FoldCompound(seq, md, options; uniq_ML)
 end
 
 Base.length(fc::FoldCompound) = length(fc.seq)
@@ -425,30 +424,30 @@ partfn(sequence::AbstractString) = partfn(FoldCompound(sequence))
 
 # stochastic backtrack
 
-# function pbacktrack(fc::FoldCompound;
-#                     num_samples::Integer=1,
-#                     options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
-#     has_exp_matrices(fc) ||
-#         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
-#     # fc.ptr.params.model_details.uniq_ML[] == 1 ||
-#     #     throw(ArgumentError("must have fc.params.model_details.uniq_ML == 1"))
-#     s = LibRNA.vrna_pbacktrack_num(fc.ptr, num_samples, options)
-#     samples = String[]
-#     s == C_NULL && return samples
-#     i = 1
-#     while unsafe_load(s, i) != C_NULL
-#         push!(samples, unsafe_string(unsafe_load(s, i)))
-#         i += 1
-#     end
-#     return samples
-# end
+function pbacktrack(fc::FoldCompound;
+                    num_samples::Integer=1,
+                    options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
+    has_exp_matrices(fc) ||
+        throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
+    fc.uniq_ML == 1 ||
+        throw(ArgumentError("must have fc.uniq_ML == 1"))
+    s = LibRNA.vrna_pbacktrack_num(fc.ptr, num_samples, options)
+    samples = String[]
+    s == C_NULL && return samples
+    i = 1
+    while unsafe_load(s, i) != C_NULL
+        push!(samples, unsafe_string(unsafe_load(s, i)))
+        i += 1
+    end
+    return samples
+end
 
-# function pbacktrack(sequence::AbstractString; num_samples::Integer=1,
-#                     options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
-#     fc = FoldCompound(sequence; uniq_ML=1)
-#     partfn(fc)
-#     return pbacktrack(fc; num_samples, options)
-# end
+function pbacktrack(sequence::AbstractString; num_samples::Integer=1,
+                    options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
+    fc = FoldCompound(sequence; uniq_ML=1)
+    partfn(fc)
+    return pbacktrack(fc; num_samples, options)
+end
 
 # maximum expected accuracy (MEA) structure
 
