@@ -1,0 +1,6 @@
+[general]
+library_name = "libRNA"
+output_file_path = "../lib/LibRNA.jl"
+module_name = "LibRNA"
+jll_pkg_name = "ViennaRNA_jll"
+export_symbol_prefixes = ["VRNA_", "vrna_"]

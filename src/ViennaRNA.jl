@@ -2,162 +2,15 @@ module ViennaRNA
 
 import Base
 using Unitful: @u_str, Quantity, uconvert
-export FoldCompound, Pairtable, bp_distance, energy, mfe, partfn, subopt,
-    subopt_zuker, inverse_fold, inverse_pf_fold, neighbors, plot_coords
+export FoldCompound, Pairtable, bp_distance, energy, mfe, partfn, bpp,
+    subopt, subopt_zuker, inverse_fold, inverse_pf_fold, neighbors,
+    plot_coords
+
+include("../lib/LibRNA.jl")
+import .LibRNA
 
 const en_unit = 1.0u"kcal/mol"
 const en_int_unit = 0.01u"kcal/mol"
-
-
-module LibRNA
-
-import ViennaRNA_jll
-const LIB = ViennaRNA_jll.libRNA
-
-# data types
-const Cfile      = Cvoid
-const vrna_fc_s  = Cvoid
-const vrna_md_s  = Cvoid
-const Tree       = Cvoid
-const FLT_OR_DBL = Cfloat
-struct vrna_subopt_sol_s
-    energy::Cfloat
-    structure::Cstring
-end
-Base.getindex(p::Ptr{vrna_subopt_sol_s}, i) = unsafe_load(p, i)
-struct vrna_move_s
-    pos_5::Cint
-    pos_3::Cint
-    next::Ptr{Cvoid}    # TODO: actually Ptr{vrna_move_s}
-end
-Base.getindex(p::Ptr{vrna_move_s}, i) = unsafe_load(p, i)
-
-# constants
-const VRNA_OPTION_DEFAULT     = 0x0
-const VRNA_OPTION_MFE         = 0x1
-const VRNA_OPTION_PF          = 0x2
-const VRNA_OPTION_HYBRID      = 0x4
-const VRNA_OPTION_EVAL_ONLY   = 0x8
-const VRNA_OPTION_WINDOW      = 0x10
-const VRNA_BRACKETS_ALPHA     = 0x4
-const VRNA_BRACKETS_RND       = 0x8
-const VRNA_BRACKETS_CLY       = 0x10
-const VRNA_BRACKETS_ANG       = 0x20
-const VRNA_BRACKETS_SQR       = 0x40
-const VRNA_BRACKETS_DEFAULT   = VRNA_BRACKETS_RND | VRNA_BRACKETS_CLY | VRNA_BRACKETS_ANG | VRNA_BRACKETS_SQR
-const VRNA_BRACKETS_ANY       = VRNA_BRACKETS_RND | VRNA_BRACKETS_CLY | VRNA_BRACKETS_ANG | VRNA_BRACKETS_SQR | VRNA_BRACKETS_ALPHA
-const VRNA_VERBOSITY_QUIET    = -1
-const VRNA_VERBOSITY_DEFAULT  = 1
-const VRNA_PLOT_TYPE_SIMPLE   = 0
-const VRNA_PLOT_TYPE_NAVIEW   = 1
-const VRNA_PLOT_TYPE_CIRCULAR = 2
-const VRNA_PLOT_TYPE_TURTLE   = 3
-const VRNA_PLOT_TYPE_PUZZLER  = 4
-const VRNA_MOVESET_INSERTION  = 4
-const VRNA_MOVESET_DELETION   = 8
-const VRNA_MOVESET_SHIFT      = 16
-const VRNA_MOVESET_NO_LP      = 32
-const VRNA_MOVESET_DEFAULT    = VRNA_MOVESET_INSERTION | VRNA_MOVESET_DELETION
-const VRNA_STRUCTURE_TREE_HIT            = 0x1
-const VRNA_STRUCTURE_TREE_SHAPIRO_SHORT  = 0x2
-const VRNA_STRUCTURE_TREE_SHAPIRO        = 0x3
-const VRNA_STRUCTURE_TREE_SHAPIRO_EXT    = 0x4
-const VRNA_STRUCTURE_TREE_SHAPIRO_WEIGHT = 0x5
-const VRNA_STRUCTURE_TREE_EXPANDED       = 0x6
-const VRNA_PBACKTRACK_DEFAULT            = 0
-const VRNA_PBACKTRACK_NON_REDUNDANT      = 1
-
-# functions
-
-vrna_alloc(s) = @ccall LIB.vrna_alloc(s::Csize_t)::Ptr{Cvoid}
-
-vrna_fold_compound(sequence, md_p, options) =
-    @ccall LIB.vrna_fold_compound(sequence::Cstring,
-                                  md_p::Ptr{vrna_md_s},
-                                  options::Cuint)::Ptr{vrna_fc_s}
-vrna_fold_compound_free(fc) =
-    @ccall LIB.vrna_fold_compound_free(fc::Ptr{vrna_fc_s})::Cvoid
-
-vrna_ptable_from_string(string, options) =
-    @ccall LIB.vrna_ptable_from_string(string::Cstring, options::Cuint)::Ptr{Cshort}
-
-vrna_bp_distance(str1, str2) =
-    @ccall LIB.vrna_bp_distance(str1::Cstring, str2::Cstring)::Cint
-
-vrna_db_to_tree_string(structure, type) =
-    @ccall LIB.vrna_db_to_tree_string(structure::Cstring, type::Cuint)::Cstring
-
-make_tree(struc) =
-    @ccall LIB.make_tree(struc::Cstring)::Ptr{Tree}
-
-tree_edit_distance(t1, t2) =
-    @ccall LIB.tree_edit_distance(t1::Ptr{Tree}, t2::Ptr{Tree})::Cfloat
-
-free_tree(t) =
-    @ccall LIB.free_tree(t::Ptr{Tree})::Cvoid
-
-vrna_mean_bp_distance(fc) =
-    @ccall LIB.vrna_mean_bp_distance(fc::Ptr{vrna_fc_s})::Cdouble
-
-vrna_ensemble_defect_pt(fc, pt) =
-    @ccall LIB.vrna_ensemble_defect_pt(fc::Ptr{vrna_fc_s}, pt::Ptr{Cshort})::Cdouble
-
-vrna_pr_structure(fc, structure) =
-    @ccall LIB.vrna_pr_structure(fc::Ptr{vrna_fc_s}, structure::Cstring)::Cdouble
-
-vrna_eval_structure(fc, structure) =
-    @ccall LIB.vrna_eval_structure(fc::Ptr{vrna_fc_s},
-                                      structure::Cstring)::Cfloat
-
-vrna_eval_structure_v(fc, structure, verbosity_level, file) =
-    @ccall LIB.vrna_eval_structure_v(fc::Ptr{vrna_fc_s},
-                                     structure::Cstring,
-                                     verbosity_level::Cint,
-                                     file::Ptr{Cfile})::Cfloat
-
-vrna_mfe(fc, structure) =
-    @ccall LIB.vrna_mfe(fc::Ptr{vrna_fc_s}, structure::Cstring)::Cfloat
-
-vrna_pf(fc, structure) =
-    @ccall LIB.vrna_pf(fc::Ptr{vrna_fc_s}, structure::Cstring)::FLT_OR_DBL
-
-vrna_pbacktrack_num(fc, num_samples, options) =
-    @ccall LIB.vrna_pbacktrack_num(fc::Ptr{vrna_fc_s}, num_samples::Cuint, options::Cuint)::Ptr{Cstring}
-
-vrna_MEA(fc, gamma, mea) =
-    @ccall LIB.vrna_MEA(fc::Ptr{vrna_fc_s}, gamma::Cdouble, mea::Ptr{Cfloat})::Cstring
-
-vrna_centroid(fc, dist) =
-    @ccall LIB.vrna_centroid(fc::Ptr{vrna_fc_s}, dist::Ptr{Cdouble})::Cstring
-
-vrna_subopt(fc, delta, sorted, fp) =
-    @ccall LIB.vrna_subopt(fc::Ptr{vrna_fc_s}, delta::Cint, sorted::Cint, fp::Ptr{Cfile})::Ptr{vrna_subopt_sol_s}
-
-vrna_subopt_zuker(fc) =
-    @ccall LIB.vrna_subopt_zuker(fc::Ptr{vrna_fc_s})::Ptr{vrna_subopt_sol_s}
-
-inverse_fold(start, target) =
-    @ccall LIB.inverse_fold(start::Cstring, target::Cstring)::Cfloat
-
-inverse_pf_fold(start, target) =
-    @ccall LIB.inverse_pf_fold(start::Cstring, target::Cstring)::Cfloat
-
-vrna_neighbors(fc, pt, options) =
-    @ccall LIB.vrna_neighbors(fc::Ptr{vrna_fc_s}, pt::Ptr{Cshort}, options::Cuint)::Ptr{vrna_move_s}
-
-vrna_move_list_free(moves) =
-    @ccall LIB.vrna_move_list_free(moves::Ptr{vrna_move_s})::Cvoid
-
-vrna_plot_coords(structure, x, y, plot_type) =
-    @ccall LIB.vrna_plot_coords(structure::Cstring, x::Ptr{Ptr{Cfloat}}, y::Ptr{Ptr{Cfloat}}, plot_type::Cint)::Cint
-
-vrna_plot_coords_pt(pt, x, y, plot_type) =
-    @ccall LIB.vrna_plot_coords_pt(pt::Ptr{Cshort}, x::Ptr{Ptr{Cfloat}}, y::Ptr{Ptr{Cfloat}}, plot_type::Cint)::Cint
-
-vrna_md_defaults_uniq_ML(flag) =
-    @ccall LIB.vrna_md_defaults_uniq_ML(flag::Cint)::Cvoid
-
-end # module LibRNA
 
 
 mutable struct FoldCompound
@@ -191,9 +44,7 @@ end
 
 Base.length(fc::FoldCompound) = length(fc.seq)
 
-#has_exp_matrices(fc::FoldCompound) = fc.ptr.exp_matrices[] != C_NULL
-# TODO
-has_exp_matrices(fc::FoldCompound) = true
+has_exp_matrices(fc::FoldCompound) = unsafe_load(fc.ptr).exp_matrices != C_NULL
 
 mutable struct Pairtable
     # Note: ptr[1] contains the number of elements, ptr[i+1] is the
@@ -382,27 +233,28 @@ partfn(sequence::AbstractString) = partfn(FoldCompound(sequence))
 
 # basepair probabilities
 
-# function bpp(fc::FoldCompound)
-#     # TODO: return upper triangular matrix type
-#     has_exp_matrices(fc) ||
-#         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
-#     n = length(fc)
-#     p = zeros(n,n)
-#     index = fc.ptr.iindx[]
-#     probs = fc.ptr.exp_matrices.probs[]
-#     for i = 1:n-1
-#         for j = i+1:n
-#             p[i,j] = probs[index[i + 1] - j + 1]
-#         end
-#     end
-#     return p
-# end
+function bpp(fc::FoldCompound)
+    # TODO: return upper triangular matrix type
+    has_exp_matrices(fc) ||
+        throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
+    n = length(fc)
+    p = zeros(n,n)
+    f = unsafe_load(fc.ptr)
+    index = f.iindx
+    probs = unsafe_load(f.exp_matrices).probs
+    for i = 1:n-1
+        for j = i+1:n
+            p[i,j] = unsafe_load(probs, unsafe_load(index, i + 1) - j + 1)
+        end
+    end
+    return p
+end
 
-# function bpp(sequence::AbstractString)
-#     fc = FoldCompound(sequence)
-#     partfn(fc)
-#     return bpp(fc)
-# end
+function bpp(sequence::AbstractString)
+    fc = FoldCompound(sequence)
+    partfn(fc)
+    return bpp(fc)
+end
 
 # stochastic backtrack
 
@@ -486,8 +338,8 @@ function subopt(fc::FoldCompound; delta::Quantity, sorted::Bool=true)
     s = LibRNA.vrna_subopt(fc.ptr, delta_int, sorted, C_NULL)
     s == C_NULL && return subs
     i = 1
-    while s[i].structure != C_NULL
-        push!(subs, (unsafe_string(s[i].structure), s[i].energy * en_unit))
+    while (si = unsafe_load(s, i)).structure != C_NULL
+        push!(subs, (unsafe_string(si.structure), si.energy * en_unit))
         i += 1
     end
     # TODO: free s recursively
@@ -504,8 +356,8 @@ function subopt_zuker(fc::FoldCompound)
     s = LibRNA.vrna_subopt_zuker(fc.ptr)
     s == C_NULL && return subs
     i = 1
-    while s[i].structure != C_NULL
-        push!(subs, (unsafe_string(s[i].structure), s[i].energy * en_unit))
+    while (si = unsafe_load(s, i)).structure != C_NULL
+        push!(subs, (unsafe_string(si.structure), si.energy * en_unit))
         i += 1
     end
     # TODO: free s recursively
@@ -547,18 +399,18 @@ function neighbors(fc::FoldCompound, pt::Pairtable;
     moves = Vector{Tuple{Int,Int}}[]
     mptr == C_NULL && return moves
     i = 1
-    while mptr[i].pos_5 != 0 && mptr[i].pos_3 != 0
-        mlist = [(mptr[i].pos_5, mptr[i].pos_3)]
-        if mptr[i].next != C_NULL
+    while (mptr_i = unsafe_load(mptr, i)).pos_5 != 0 && mptr_i.pos_3 != 0
+        mlist = [(mptr_i.pos_5, mptr_i.pos_3)]
+        if mptr_i.next != C_NULL
             # this move is not an atomic move, so follow the next
             # pointer and collect all moves
-            next = mptr[i].next
+            next = mptr_i.next
             j = 1
-            while next[j].pos_5 != 0 && next[j].pos_3 != 0
-                if next[j].next != C_NULL
+            while (next_j = unsafe_load(next, j)).pos_5 != 0 && next_j.pos_3 != 0
+                if next_j.next != C_NULL
                     @warn "unexpected extra branching in neighbors()"
                 end
-                push!(mlist, (next[j].pos_5, next[j].pos_3))
+                push!(mlist, (next_j.pos_5, next_j.pos_3))
                 j += 1
             end
         end
