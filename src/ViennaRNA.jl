@@ -1,21 +1,3 @@
-# TODO
-# - replace Libc.malloc with LibRNA.vrna_alloc
-# - has_exp_matrices checks
-# - uniq_ML option to FoldCompound()
-# - bpp()
-# - functions that return C_NULL terminated lists via a pointer:
-#   ensure all check for pointer == C_NULL
-
-# - change energy param set
-
-# - change model details
-#   vrna_md_set_default(*md) -> void
-#   vrna_md_copy([*to_md], [*from_md]) -> *md
-#   vrna_md_defaults_reset([*md]) -> void
-#
-#   md_new = vrna_md_copy(NULL, NULL)
-#   
-
 module ViennaRNA
 
 import Base

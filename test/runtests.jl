@@ -2,9 +2,6 @@ using Test
 using ViennaRNA
 using Unitful
 
-# TODO
-# - more Pairtable tests, setindex/getindex illegal, pt[1] = 0, pt[i] = 0 etc
-
 @testset "FoldCompound" begin
     seq = "GGGAAACCC"
     @test length(FoldCompound(seq)) == 9
