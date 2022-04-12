@@ -288,7 +288,7 @@ end
 function mea(fc::FoldCompound; gamma=1.0)
     has_exp_matrices(fc) ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
-    ptr_mea   = Ptr{Cfloat}(Libc.malloc(sizeof(Cfloat)))
+    ptr_mea   = Ptr{Cfloat}(LibRNA.vrna_alloc(sizeof(Cfloat)))
     ptr_str   = LibRNA.vrna_MEA(fc.ptr, gamma, ptr_mea)
     mea_val   = unsafe_load(ptr_mea)
     mea_struc = unsafe_string(ptr_str)
@@ -308,7 +308,7 @@ end
 function centroid(fc::FoldCompound)
     has_exp_matrices(fc) ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
-    ptr_dist = Ptr{Cdouble}(Libc.malloc(sizeof(Cdouble)))
+    ptr_dist = Ptr{Cdouble}(LibRNA.vrna_alloc(sizeof(Cdouble)))
     ptr_str = LibRNA.vrna_centroid(fc.ptr, ptr_dist)
     cen_dist = unsafe_load(ptr_dist)
     cen_struc = unsafe_string(ptr_str)
@@ -443,9 +443,8 @@ function plot_coords(structure; plot_type::Symbol=:naview)
         throw(ArgumentError("unknown plot_type $plot_type, options are:" *
                             " :simple, :naview, :circular, :turtle, :puzzler"))
     end
-    # TODO: use LibRNA.vrna_alloc
-    ptr_cx = Ptr{Ptr{Cfloat}}(Libc.malloc(sizeof(Ptr{Cfloat})))
-    ptr_cy = Ptr{Ptr{Cfloat}}(Libc.malloc(sizeof(Ptr{Cfloat})))
+    ptr_cx = Ptr{Ptr{Cfloat}}(LibRNA.vrna_alloc(sizeof(Ptr{Cfloat})))
+    ptr_cy = Ptr{Ptr{Cfloat}}(LibRNA.vrna_alloc(sizeof(Ptr{Cfloat})))
     n = _vrna_plot_coords(structure, ptr_cx, ptr_cy, type)
     cx = unsafe_load(ptr_cx)
     cy = unsafe_load(ptr_cy)
