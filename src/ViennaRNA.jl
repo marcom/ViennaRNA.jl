@@ -78,7 +78,7 @@ end
 function Base.setindex!(pt::Pairtable, val, i)
     @boundscheck begin
         len = length(pt)
-        if i < 1 || val < 0 || i > len || val > len
+        if i < 1 || val < 0 || i > len || val > len || i == val
             throw(ArgumentError("illegal basepair set: pt[$i] = $val"))
         end
     end

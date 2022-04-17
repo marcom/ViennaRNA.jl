@@ -26,11 +26,18 @@ end
     @test pt[7] == 3
     @test pt[8] == 2
     @test pt[9] == 1
+    @test_throws BoundsError pt[0]
+    @test_throws BoundsError pt[length(pt) + 1]
     # setindex!
     pt[3] = 4
     @test pt[3] == 4
     @test pt[4] == 3
     @test pt[7] == 0
+    @test_throws ArgumentError pt[1] = 1
+    @test_throws ArgumentError pt[0] = 0
+    @test_throws ArgumentError pt[length(pt) + 1] = 0
+    @test_throws ArgumentError pt[1] = -1
+    @test_throws ArgumentError pt[1] = length(pt) + 1
     # show
     buf = IOBuffer()
     show(buf, MIME("text/plain"), pt)
