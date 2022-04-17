@@ -2,9 +2,11 @@ module ViennaRNA
 
 import Base
 using Unitful: @u_str, Quantity, uconvert
-export FoldCompound, Pairtable, bp_distance, energy, mfe, partfn, bpp,
-    subopt, subopt_zuker, inverse_fold, inverse_pf_fold, neighbors,
-    plot_coords
+
+export FoldCompound, Pairtable, bp_distance, bpp, centroid, energy,
+    ensemble_defect, inverse_fold, inverse_pf_fold, mea,
+    mean_bp_distance, mfe, neighbors, partfn, pbacktrack, plot_coords,
+    prob_of_structure, subopt, subopt_zuker, tree_edit_dist
 
 include("../lib/LibRNA.jl")
 import .LibRNA
