@@ -95,6 +95,11 @@ end
     fc = FoldCompound(seq)
     @test ViennaRNA.energy(fc, str) isa Unitful.Quantity
     @test ViennaRNA.energy(seq, str) isa Unitful.Quantity
+    redirect_stdout(devnull) do
+        # suppress stdout output from ViennaRNA for verbose option
+        @test ViennaRNA.energy(fc, str; verbose=true) isa Unitful.Quantity
+        @test ViennaRNA.energy(seq, str; verbose=true) isa Unitful.Quantity
+    end
     @test_throws ArgumentError ViennaRNA.energy(fc, ".")
     @test_throws ArgumentError ViennaRNA.energy("(...)", ".")
 end
