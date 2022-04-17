@@ -48,6 +48,12 @@ Base.length(fc::FoldCompound) = length(fc.seq)
 
 has_exp_matrices(fc::FoldCompound) = unsafe_load(fc.ptr).exp_matrices != C_NULL
 
+function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
+    println(io, "FoldCompound, $(length(fc)) nt")
+    println(io, "  uniq_ML  = $(fc.uniq_ML)")
+    print(io,   "  sequence = $(fc.seq)")
+end
+
 mutable struct Pairtable
     # Note: ptr[1] contains the number of elements, ptr[i+1] is the
     #       i-th element this means that functions like getindex or

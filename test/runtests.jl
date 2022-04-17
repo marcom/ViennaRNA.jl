@@ -11,6 +11,10 @@ using Unitful
     # @test fc.ptr.params.model_details.uniq_ML[] == 1
     fc = FoldCompound(seq; options=ViennaRNA.LibRNA.VRNA_OPTION_MFE)
     @test length(fc) == 9
+    # show
+    buf = IOBuffer()
+    show(buf, MIME("text/plain"), fc)
+    @test length(String(take!(buf))) > 0
 end
 
 @testset "Pairtable" begin
