@@ -11,6 +11,21 @@ export FoldCompound, Pairtable, bp_distance, bpp, centroid, energy,
 include("../lib/LibRNA.jl")
 import .LibRNA
 
+module LibRNA_Helper
+function free_subopt_solutions(ptr)
+    ptr == C_NULL && return
+    i = 1
+    while true
+        sol = unsafe_load(ptr, i)
+        sol.structure == C_NULL && break
+        Libc.free(sol.structure)
+        i += 1
+    end
+    Libc.free(ptr)
+end
+end
+import .LibRNA_Helper
+
 const en_unit = 1.0u"kcal/mol"
 const en_int_unit = 0.01u"kcal/mol"
 
@@ -350,7 +365,7 @@ function subopt(fc::FoldCompound; delta::Quantity, sorted::Bool=true)
         push!(subs, (unsafe_string(si.structure), si.energy * en_unit))
         i += 1
     end
-    # TODO: free s recursively
+    LibRNA_Helper.free_subopt_solutions(s)
     return subs
 end
 
@@ -368,7 +383,7 @@ function subopt_zuker(fc::FoldCompound)
         push!(subs, (unsafe_string(si.structure), si.energy * en_unit))
         i += 1
     end
-    # TODO: free s recursively
+    LibRNA_Helper.free_subopt_solutions(s)
     return subs
 end
 
