@@ -2090,6 +2090,111 @@ function vrna_backtrack_window(fc, Lfold_filename, file_pos, structure, mfe)
     ccall((:vrna_backtrack_window, libRNA), Cint, (Ptr{vrna_fold_compound_t}, Ptr{Cchar}, Clong, Ptr{Ptr{Cchar}}, Cdouble), fc, Lfold_filename, file_pos, structure, mfe)
 end
 
+function vrna_params_load(fname, options)
+    ccall((:vrna_params_load, libRNA), Cint, (Ptr{Cchar}, Cuint), fname, options)
+end
+
+function vrna_params_save(fname, options)
+    ccall((:vrna_params_save, libRNA), Cint, (Ptr{Cchar}, Cuint), fname, options)
+end
+
+function vrna_params_load_from_string(string, name, options)
+    ccall((:vrna_params_load_from_string, libRNA), Cint, (Ptr{Cchar}, Ptr{Cchar}, Cuint), string, name, options)
+end
+
+function vrna_params_load_defaults()
+    ccall((:vrna_params_load_defaults, libRNA), Cint, ())
+end
+
+function vrna_params_load_RNA_Turner2004()
+    ccall((:vrna_params_load_RNA_Turner2004, libRNA), Cint, ())
+end
+
+function vrna_params_load_RNA_Turner1999()
+    ccall((:vrna_params_load_RNA_Turner1999, libRNA), Cint, ())
+end
+
+function vrna_params_load_RNA_Andronescu2007()
+    ccall((:vrna_params_load_RNA_Andronescu2007, libRNA), Cint, ())
+end
+
+function vrna_params_load_RNA_Langdon2018()
+    ccall((:vrna_params_load_RNA_Langdon2018, libRNA), Cint, ())
+end
+
+function vrna_params_load_RNA_misc_special_hairpins()
+    ccall((:vrna_params_load_RNA_misc_special_hairpins, libRNA), Cint, ())
+end
+
+function vrna_params_load_DNA_Mathews2004()
+    ccall((:vrna_params_load_DNA_Mathews2004, libRNA), Cint, ())
+end
+
+function vrna_params_load_DNA_Mathews1999()
+    ccall((:vrna_params_load_DNA_Mathews1999, libRNA), Cint, ())
+end
+
+@cenum parset::Int32 begin
+    UNKNOWN = -1
+    QUIT = 0
+    S = 1
+    S_H = 2
+    HP = 3
+    HP_H = 4
+    B = 5
+    B_H = 6
+    IL = 7
+    IL_H = 8
+    MMH = 9
+    MMH_H = 10
+    MMI = 11
+    MMI_H = 12
+    MMI1N = 13
+    MMI1N_H = 14
+    MMI23 = 15
+    MMI23_H = 16
+    MMM = 17
+    MMM_H = 18
+    MME = 19
+    MME_H = 20
+    D5 = 21
+    D5_H = 22
+    D3 = 23
+    D3_H = 24
+    INT11 = 25
+    INT11_H = 26
+    INT21 = 27
+    INT21_H = 28
+    INT22 = 29
+    INT22_H = 30
+    ML = 31
+    TL = 32
+    TRI = 33
+    HEX = 34
+    NIN = 35
+    MISC = 36
+end
+
+function last_parameter_file()
+    ccall((:last_parameter_file, libRNA), Ptr{Cchar}, ())
+end
+
+function read_parameter_file(fname)
+    ccall((:read_parameter_file, libRNA), Cvoid, (Ptr{Cchar},), fname)
+end
+
+function write_parameter_file(fname)
+    ccall((:write_parameter_file, libRNA), Cvoid, (Ptr{Cchar},), fname)
+end
+
+function gettype(ident)
+    ccall((:gettype, libRNA), parset, (Ptr{Cchar},), ident)
+end
+
+function settype(s)
+    ccall((:settype, libRNA), Ptr{Cchar}, (parset,), s)
+end
+
 struct vrna_dimer_pf_s
     F0AB::Cdouble
     FAB::Cdouble
@@ -2926,6 +3031,8 @@ const VRNA_NEIGHBOR_CHANGE = 1
 const VRNA_NEIGHBOR_INVALID = 2
 
 const VRNA_NEIGHBOR_NEW = 3
+
+const VRNA_PARAMETER_FORMAT_DEFAULT = 0
 
 const VRNA_PBACKTRACK_DEFAULT = 0
 

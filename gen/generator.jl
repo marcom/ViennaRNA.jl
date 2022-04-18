@@ -22,6 +22,7 @@ accept_headers = [
     "landscape/neighbor.h",
     "MEA.h",
     "mfe.h",
+    "params/io.h",
     "part_func.h",
     "plotting/layouts.h",
     "subopt.h",

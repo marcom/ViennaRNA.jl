@@ -11,6 +11,10 @@ using Unitful
     # @test fc.ptr.params.model_details.uniq_ML[] == 1
     fc = FoldCompound(seq; options=ViennaRNA.LibRNA.VRNA_OPTION_MFE)
     @test length(fc) == 9
+    # use different energy parameter sets
+    fc = FoldCompound(seq; params=:RNA_Turner1999)
+    @test length(fc) == 9
+    @test_throws ArgumentError FoldCompound(seq; params=:UNKNOWN_ENERGY_PARAMS)
     # show
     buf = IOBuffer()
     show(buf, MIME("text/plain"), fc)
@@ -102,6 +106,9 @@ end
     end
     @test_throws ArgumentError ViennaRNA.energy(fc, ".")
     @test_throws ArgumentError ViennaRNA.energy("(...)", ".")
+    # test different energy parameter sets
+    @test energy(FoldCompound(seq; params=:RNA_Turner1999), str) ≈ -2.9u"kcal/mol" atol=1e-3u"kcal/mol"
+    @test energy(FoldCompound(seq; params=:RNA_Andronescu2007), str) ≈ -2.15u"kcal/mol" atol=1e-3u"kcal/mol"
 end
 
 @testset "mfe" begin

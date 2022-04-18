@@ -38,16 +38,18 @@ const en_int_unit = 0.01u"kcal/mol"
 
 
 mutable struct FoldCompound
-    ptr     :: Ptr{LibRNA.vrna_fc_s}
-    seq     :: String
-    uniq_ML :: Int
+    ptr         :: Ptr{LibRNA.vrna_fc_s}
+    seq         :: String
+    uniq_ML     :: Int
+    params_name :: String
     function FoldCompound(seq::AbstractString,
                           model_details::Ptr{LibRNA.vrna_md_s},
                           options::Unsigned;
-                          uniq_ML::Integer=0)
+                          uniq_ML::Integer=0,
+                          params_name::String)
         ptr = LibRNA.vrna_fold_compound(seq, model_details, options)
         ptr != C_NULL || throw(ErrorException("pointer == C_NULL"))
-        fc = new(ptr, seq, uniq_ML)
+        fc = new(ptr, seq, uniq_ML, params_name)
         finalizer(fc) do x
             # TODO: do we have to call vrna_mx_mfe_free or
             #       vrna_mx_pf_free here ourselves?
@@ -58,12 +60,28 @@ end
 
 function FoldCompound(seq::AbstractString;
                       uniq_ML::Integer=0,
-                      options::Unsigned=LibRNA.VRNA_OPTION_DEFAULT)
+                      options::Unsigned=LibRNA.VRNA_OPTION_DEFAULT,
+                      params::Symbol=:RNA_Turner2004)
     # TODO: who frees md? hopefully vrna_fold_compound_free()
     #       otherwise possible memory leak
+    params_name = String(params)
+    if params == :RNA_Turner1999
+        err = LibRNA.vrna_params_load_RNA_Turner1999()
+    elseif params == :RNA_Turner2004
+        err = LibRNA.vrna_params_load_RNA_Turner2004()
+    elseif params == :RNA_Andronescu2007
+        err = LibRNA.vrna_params_load_RNA_Andronescu2007()
+    elseif params == :RNA_Langdon2018
+        err = LibRNA.vrna_params_load_RNA_Langdon2018()
+    else
+        throw(ArgumentError("unknown energy parameters: $(params)"))
+    end
+    if err == 0
+        throw(ErrorException("Failed to load energy parameters $params_name"))
+    end
     md = Ptr{LibRNA.vrna_md_s}(C_NULL)
     LibRNA.vrna_md_defaults_uniq_ML(uniq_ML)
-    return FoldCompound(seq, md, options; uniq_ML)
+    return FoldCompound(seq, md, options; uniq_ML, params_name)
 end
 
 Base.length(fc::FoldCompound) = length(fc.seq)
@@ -72,6 +90,7 @@ has_exp_matrices(fc::FoldCompound) = unsafe_load(fc.ptr).exp_matrices != C_NULL
 
 function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     println(io, "FoldCompound, $(length(fc)) nt")
+    println(io, "  params   = $(fc.params_name)")
     println(io, "  uniq_ML  = $(fc.uniq_ML)")
     print(io,   "  sequence = $(fc.seq)")
 end
