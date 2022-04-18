@@ -12,7 +12,7 @@ include("../lib/LibRNA.jl")
 import .LibRNA
 
 module LibRNA_Helper
-function free_subopt_solutions(ptr)
+function free_subopt_solutions(ptr::Ptr)
     ptr == C_NULL && return
     i = 1
     while true
@@ -20,6 +20,13 @@ function free_subopt_solutions(ptr)
         sol.structure == C_NULL && break
         Libc.free(sol.structure)
         i += 1
+    end
+    Libc.free(ptr)
+end
+
+function free_structure_list(ptr::Ptr, num::Integer)
+    for i = 1:num
+        Libc.free(unsafe_load(ptr, i))
     end
     Libc.free(ptr)
 end
@@ -296,6 +303,7 @@ function pbacktrack(fc::FoldCompound;
         push!(samples, unsafe_string(unsafe_load(s, i)))
         i += 1
     end
+    LibRNA_Helper.free_structure_list(s, num_samples)
     return samples
 end
 
