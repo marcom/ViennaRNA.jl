@@ -5,7 +5,7 @@ using Unitful
 @testset "FoldCompound" begin
     seq = "GGGAAACCC"
     @test length(FoldCompound(seq)) == 9
-    fc = FoldCompound(seq; uniq_ML=1)
+    fc = FoldCompound(seq; uniq_ML=true)
     @test length(fc) == 9
     # TODO
     # @test fc.ptr.params.model_details.uniq_ML[] == 1
@@ -143,7 +143,7 @@ end
 
 @testset "pbacktrack" begin
     seq = "GGGGGAAAAACCCCCCCCAUUCA"
-    fc = FoldCompound(seq; uniq_ML = 1)
+    fc = FoldCompound(seq; uniq_ML=true)
     ViennaRNA.partfn(fc)
     @test length(ViennaRNA.pbacktrack(fc)) == 1
     @test length(ViennaRNA.pbacktrack(seq)) == 1
@@ -180,7 +180,7 @@ end
 
 @testset "subopt" begin
     seq = "GGGGGAAAAACCCCCCCCAUUCA"
-    fc = FoldCompound(seq; uniq_ML = 1)
+    fc = FoldCompound(seq; uniq_ML=true)
     s = ViennaRNA.subopt(fc; delta=5u"kcal/mol")
     @test s isa Vector{Tuple{String,Unitful.Quantity}}
     s = ViennaRNA.subopt(fc; delta=5u"kcal/mol", sorted=true)

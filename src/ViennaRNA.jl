@@ -40,12 +40,12 @@ const en_int_unit = 0.01u"kcal/mol"
 mutable struct FoldCompound
     ptr         :: Ptr{LibRNA.vrna_fc_s}
     seq         :: String
-    uniq_ML     :: Int
+    uniq_ML     :: Bool
     params_name :: String
     function FoldCompound(seq::AbstractString,
                           model_details::Ptr{LibRNA.vrna_md_s},
                           options::Unsigned;
-                          uniq_ML::Integer=0,
+                          uniq_ML::Bool=false,
                           params_name::String)
         ptr = LibRNA.vrna_fold_compound(seq, model_details, options)
         ptr != C_NULL || throw(ErrorException("pointer == C_NULL"))
@@ -59,7 +59,7 @@ mutable struct FoldCompound
 end
 
 function FoldCompound(seq::AbstractString;
-                      uniq_ML::Integer=0,
+                      uniq_ML::Bool=false,
                       options::Unsigned=LibRNA.VRNA_OPTION_DEFAULT,
                       params::Symbol=:RNA_Turner2004)
     # TODO: who frees md? hopefully vrna_fold_compound_free()
@@ -80,7 +80,7 @@ function FoldCompound(seq::AbstractString;
         throw(ErrorException("Failed to load energy parameters $params_name"))
     end
     md = Ptr{LibRNA.vrna_md_s}(C_NULL)
-    LibRNA.vrna_md_defaults_uniq_ML(uniq_ML)
+    LibRNA.vrna_md_defaults_uniq_ML(Int(uniq_ML))
     return FoldCompound(seq, md, options; uniq_ML, params_name)
 end
 
@@ -312,8 +312,8 @@ function pbacktrack(fc::FoldCompound;
                     options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
     has_exp_matrices(fc) ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
-    fc.uniq_ML == 1 ||
-        throw(ArgumentError("must have fc.uniq_ML == 1"))
+    fc.uniq_ML ||
+        throw(ArgumentError("must have fc.uniq_ML == true"))
     s = LibRNA.vrna_pbacktrack_num(fc.ptr, num_samples, options)
     samples = String[]
     s == C_NULL && return samples
@@ -328,7 +328,7 @@ end
 
 function pbacktrack(sequence::AbstractString; num_samples::Integer=1,
                     options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
-    fc = FoldCompound(sequence; uniq_ML=1)
+    fc = FoldCompound(sequence; uniq_ML=true)
     partfn(fc)
     return pbacktrack(fc; num_samples, options)
 end
@@ -397,7 +397,7 @@ function subopt(fc::FoldCompound; delta::Quantity, sorted::Bool=true)
 end
 
 function subopt(sequence::AbstractString; delta::Quantity, sorted::Bool=true)
-    fc = FoldCompound(sequence; uniq_ML=1, options=LibRNA.VRNA_OPTION_MFE)
+    fc = FoldCompound(sequence; uniq_ML=true, options=LibRNA.VRNA_OPTION_MFE)
     return subopt(fc; delta, sorted)
 end
 
