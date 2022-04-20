@@ -26,8 +26,11 @@ using ViennaRNA, Unitful
 # - temperature is used to rescale the free energies with the formula ΔG = ΔH - TΔS
 #   (the energy parameter sets contain enthalpy and entropy contributions)
 # - uniq_ML=true (unique multiloop decomposition) is needed for some functions,
-#   e.g. pbacktrack
-fc = FoldCompound("GGGGGAAAAACCCCCC"; params=:RNA_Turner2004, temperature=37u"°C", uniq_ML=true)
+#   e.g. pbacktrack. The default is false
+fc = FoldCompound("GGGGGAAAAACCCCCC";
+		  params=:RNA_Turner2004,
+		  temperature=37u"°C",
+		  uniq_ML=true)
 
 # minimum free energy structure (MFE) for a sequence
 # please excuse the excess precision printed when displaying -9.4 kcal/mol
