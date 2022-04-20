@@ -9,9 +9,10 @@ ViennaRNA publications if you use this library.
 
 ```julia
 using ViennaRNA, Unitful
-# Unitful is needed to be able to specify units with @u_str, e.g. 4u"kcal/mol" or 37u"°C"
-# Note: you can get the degree symbol ° by typing \degree and pressing
-  the TAB key in the REPL or in an editor with Julia syntax support
+# Unitful is needed to be able to specify units with @u_str,
+# e.g. 4u"kcal/mol" or 37u"°C".  You can get the degree symbol ° by
+# typing \degree and pressing the TAB key in the REPL or in an editor
+# with Julia syntax support
 
 # Notes
 # The original C API functions can be found in the submodule `ViennaRNA.LibRNA`.
@@ -23,10 +24,11 @@ using ViennaRNA, Unitful
 # - params sets the energy parameter set used, options are
 #   :RNA_Turner1999, :RNA_Turner2004, :RNA_Andronescu2007,
 #   :RNA_Langdon2018. The default is :RNA_Turner2004
-# - temperature is used to rescale the free energies with the formula ΔG = ΔH - TΔS
-#   (the energy parameter sets contain enthalpy and entropy contributions)
-# - uniq_ML=true (unique multiloop decomposition) is needed for some functions,
-#   e.g. pbacktrack. The default is false
+# - temperature is used to rescale the free energies with the formula
+#   ΔG = ΔH - TΔS (the energy parameter sets contain enthalpy and
+#   entropy contributions). The default is 37u"°C"
+# - uniq_ML=true (unique multiloop decomposition) is needed for some
+#   functions, e.g. pbacktrack. The default is false
 fc = FoldCompound("GGGGGAAAAACCCCCC";
 		  params=:RNA_Turner2004,
 		  temperature=37u"°C",
