@@ -15,6 +15,12 @@ using Unitful
     fc = FoldCompound(seq; params=:RNA_Turner1999)
     @test length(fc) == 9
     @test_throws ArgumentError FoldCompound(seq; params=:UNKNOWN_ENERGY_PARAMS)
+    # use different temperatures to evaluate energies
+    fc = FoldCompound(seq; temperature=55u"°C")
+    @test length(fc) == 9
+    fc = FoldCompound(seq; temperature=310u"K")
+    @test length(fc) == 9
+    @test_throws Unitful.DimensionError FoldCompound(seq; temperature=100u"m")
     # show
     buf = IOBuffer()
     show(buf, MIME("text/plain"), fc)
@@ -107,8 +113,13 @@ end
     @test_throws ArgumentError ViennaRNA.energy(fc, ".")
     @test_throws ArgumentError ViennaRNA.energy("(...)", ".")
     # test different energy parameter sets
-    @test energy(FoldCompound(seq; params=:RNA_Turner1999), str) ≈ -2.9u"kcal/mol" atol=1e-3u"kcal/mol"
+    @test energy(FoldCompound(seq; params=:RNA_Turner1999), str) ≈ -2.90u"kcal/mol" atol=1e-3u"kcal/mol"
     @test energy(FoldCompound(seq; params=:RNA_Andronescu2007), str) ≈ -2.15u"kcal/mol" atol=1e-3u"kcal/mol"
+    # test different temperatures
+    @test energy(FoldCompound(seq; temperature=30u"°C"), str) ≈ -3.52u"kcal/mol" atol=1e-3u"kcal/mol"
+    @test energy(FoldCompound(seq; temperature=37u"°C"), str) ≈ -2.90u"kcal/mol" atol=1e-3u"kcal/mol"
+    @test energy(FoldCompound(seq; temperature=55u"°C"), str) ≈ -1.24u"kcal/mol" atol=1e-3u"kcal/mol"
+    @test energy(FoldCompound(seq; temperature=323.15u"K"), str) ≈ -1.69u"kcal/mol" atol=1e-3u"kcal/mol" # 323.15u"K" is 50u"°C"
 end
 
 @testset "mfe" begin

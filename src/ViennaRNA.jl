@@ -1,7 +1,7 @@
 module ViennaRNA
 
 import Base
-using Unitful: @u_str, Quantity, uconvert
+using Unitful: @u_str, Quantity, uconvert, ustrip
 
 export FoldCompound, Pairtable, bp_distance, bpp, centroid, energy,
     ensemble_defect, inverse_fold, inverse_pf_fold, mea,
@@ -40,16 +40,18 @@ const en_int_unit = 0.01u"kcal/mol"
 mutable struct FoldCompound
     ptr         :: Ptr{LibRNA.vrna_fc_s}
     seq         :: String
-    uniq_ML     :: Bool
     params_name :: String
+    temperature :: Quantity
+    uniq_ML     :: Bool
     function FoldCompound(seq::AbstractString,
                           model_details::Ptr{LibRNA.vrna_md_s},
                           options::Unsigned;
-                          uniq_ML::Bool=false,
-                          params_name::String)
+                          params_name::String,
+                          temperature::Quantity=37.0u"°C",
+                          uniq_ML::Bool=false)
         ptr = LibRNA.vrna_fold_compound(seq, model_details, options)
         ptr != C_NULL || throw(ErrorException("pointer == C_NULL"))
-        fc = new(ptr, seq, uniq_ML, params_name)
+        fc = new(ptr, seq, params_name, temperature, uniq_ML)
         finalizer(fc) do x
             # TODO: do we have to call vrna_mx_mfe_free or
             #       vrna_mx_pf_free here ourselves?
@@ -59,9 +61,10 @@ mutable struct FoldCompound
 end
 
 function FoldCompound(seq::AbstractString;
+                      params::Symbol=:RNA_Turner2004,
+                      temperature::Quantity=37.0u"°C",
                       uniq_ML::Bool=false,
-                      options::Unsigned=LibRNA.VRNA_OPTION_DEFAULT,
-                      params::Symbol=:RNA_Turner2004)
+                      options::Unsigned=LibRNA.VRNA_OPTION_DEFAULT)
     # TODO: who frees md? hopefully vrna_fold_compound_free()
     #       otherwise possible memory leak
     params_name = String(params)
@@ -79,9 +82,11 @@ function FoldCompound(seq::AbstractString;
     if err == 0
         throw(ErrorException("Failed to load energy parameters $params_name"))
     end
-    md = Ptr{LibRNA.vrna_md_s}(C_NULL)
+    temperature_nounit = ustrip(uconvert(u"°C", temperature))
+    LibRNA.vrna_md_defaults_temperature(temperature_nounit)
     LibRNA.vrna_md_defaults_uniq_ML(Int(uniq_ML))
-    return FoldCompound(seq, md, options; uniq_ML, params_name)
+    md = Ptr{LibRNA.vrna_md_s}(C_NULL)
+    return FoldCompound(seq, md, options; params_name, temperature, uniq_ML)
 end
 
 Base.length(fc::FoldCompound) = length(fc.seq)
@@ -90,9 +95,10 @@ has_exp_matrices(fc::FoldCompound) = unsafe_load(fc.ptr).exp_matrices != C_NULL
 
 function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     println(io, "FoldCompound, $(length(fc)) nt")
-    println(io, "  params   = $(fc.params_name)")
-    println(io, "  uniq_ML  = $(fc.uniq_ML)")
-    print(io,   "  sequence = $(fc.seq)")
+    println(io, "  params      = $(fc.params_name)")
+    println(io, "  temperature = $(fc.temperature)")
+    println(io, "  uniq_ML     = $(fc.uniq_ML)")
+    print(io,   "  sequence    = $(fc.seq)")
 end
 
 mutable struct Pairtable
