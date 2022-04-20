@@ -111,8 +111,16 @@ end
 
 Base.length(pt::Pairtable) = Int(unsafe_load(pt.ptr, 1))
 
+# Notes
+# - only works for unpseudoknotted structures
+# - vrna_db_from_ptable does the same, but we would have to incur an
+#   extra malloc/free to move the string to Julia, so we do it here
+#   ourselves
+Base.String(pt::Pairtable) =
+    join(pt[i] == 0 ? '.' : pt[i] > i ? '(' : ')' for i = 1:length(pt))
+
 function Base.show(io::IO, mime::MIME"text/plain", pt::Pairtable)
-    show(io, mime, [pt[i] for i = 1:length(pt)])
+    print(io, String(pt))
 end
 
 function Base.getindex(pt::Pairtable, i)
