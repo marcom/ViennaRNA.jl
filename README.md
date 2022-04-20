@@ -8,7 +8,10 @@ ViennaRNA publications if you use this library.
 ## Usage
 
 ```julia
-using ViennaRNA
+using ViennaRNA, Unitful
+# Unitful is needed to be able to specify units with @u_str, e.g. 4u"kcal/mol" or 37u"°C"
+# Note: you can get the degree symbol ° by typing \degree and pressing
+  the TAB key in the REPL or in an editor with Julia syntax support
 
 # Notes
 # The original C API functions can be found in the submodule `ViennaRNA.LibRNA`.
@@ -16,16 +19,22 @@ using ViennaRNA
 # sequence instead of a FoldCompound, e.g. `mfe("GGGAAACCC")`.
 
 # sequence to be folded
-# uniq_ML=1 (unique multiloop decomposition) is needed for some functions,
-# e.g. pbacktrack
-fc = FoldCompound("GGGGGAAAAACCCCCC"; uniq_ML=1)
+# params, temperature, uniq_ML are optional keyword arguments
+# - params sets the energy parameter set used, options are
+#   :RNA_Turner1999, :RNA_Turner2004, :RNA_Andronescu2007,
+#   :RNA_Langdon2018. The default is :RNA_Turner2004
+# - temperature is used to rescale the free energies with the formula ΔG = ΔH - TΔS
+#   (the energy parameter sets contain enthalpy and entropy contributions)
+# - uniq_ML=true (unique multiloop decomposition) is needed for some functions,
+#   e.g. pbacktrack
+fc = FoldCompound("GGGGGAAAAACCCCCC"; params=:RNA_Turner2004, temperature=37u"°C", uniq_ML=true)
 
 # minimum free energy structure (MFE) for a sequence
 # please excuse the excess precision printed when displaying -9.4 kcal/mol
 mfe(fc)                         # => ("(((((.....))))).", -9.399999618530273 kcal mol^-1)
 
 # partition function
-partfn(fc)                      # => ("(((((.....})))),", -9.81672191619873 kcal mol^-1)
+partfn(fc)                      # => ("(((((.....})))),", -9.81672180213034 kcal mol^-1)
 
 # calculate energy for structure
 energy(fc, "((((.......)))).")  # => -6.199999809265137 kcal mol^-1
@@ -37,7 +46,7 @@ bpp(fc)                         # => 16×16 Matrix{Float64}
 prob_of_structure(fc, "(((((.....))))).")  # => 0.5085737925408758
 
 # ensemble defect
-ensemble_defect(fc, "(((((.....))))).")  # => 0.3035942605397949
+ensemble_defect(fc, "(((((.....))))).")  # => 0.33085374128228884
 
 # probabilistic / stochastic backtrack, sample from Boltzmann ensemble of
 # secondary structures
@@ -46,7 +55,6 @@ pbacktrack(fc; num_samples=10)  # => 10-element Vector{String}
 
 # all suboptimal structures with energies delta above the MFE
 # structure
-using Unitful    # to be able to write 4u"kcal/mol" with @u_str
 subopt(fc; delta=4u"kcal/mol")  # => Vector{Tuple{String, Quantity}}
 
 # suboptimal structures with the method of Zuker
