@@ -36,7 +36,6 @@ import .LibRNA_Helper
 const en_unit = 1.0u"kcal/mol"
 const en_int_unit = 0.01u"kcal/mol"
 
-
 mutable struct FoldCompound
     ptr         :: Ptr{LibRNA.vrna_fc_s}
     seq         :: String
@@ -60,6 +59,20 @@ mutable struct FoldCompound
     end
 end
 
+"""
+    FoldCompound(seq; [params, temperature, uniq_ML])
+
+A `FoldCompound` encapsulates a nucleotide sequence, energy
+parameters, and model details.
+
+Input arguments:
+- `seq`:    nucleotide sequence
+- `params`: energy parameter set, legal values are `:RNA_Turner1999`,
+  `:RNA_Turner2004`, `:RNA_Andronescu2007`, `:RNA_Langdon2018`, with
+  the default being `:RNA_Turner2004`
+- `uniq_ML`: use unique decomposition for multiloops, needed for
+  `pbacktrack` and `subopt`
+"""
 function FoldCompound(seq::AbstractString;
                       params::Symbol=:RNA_Turner2004,
                       temperature::Quantity=37.0u"°C",
@@ -101,6 +114,14 @@ function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     print(io,   "  sequence    = $(fc.seq)")
 end
 
+"""
+    Pairtable(structure)
+
+A `Pairtable` represents a secondary structure given in dot-bracket
+notation, e.g. `(((...)))`.  In dot-bracket notation, unpaired bases
+are denoted by a dot `.` and base-pairs are denoted by matching
+brackets `(` and `)`.
+"""
 mutable struct Pairtable
     # Note: ptr[1] contains the number of elements, ptr[i+1] is the
     #       i-th element this means that functions like getindex or
@@ -158,12 +179,24 @@ end
 
 # secondary structure distance measures
 
-function bp_distance(a::AbstractString, b::AbstractString)
-    length(a) == length(b) ||
+"""
+    bp_distance(structure1, structure2)
+
+Base-pair distance between two secondary structures `structure1` and
+`structure2`.
+"""
+function bp_distance(structure1::AbstractString, structure2::AbstractString)
+    length(structure1) == length(structure2) ||
         throw(ArgumentError("input structures have different lengths"))
-    return LibRNA.vrna_bp_distance(a, b)
+    return LibRNA.vrna_bp_distance(structure1, structure2)
 end
 
+"""
+    tree_edit_dist(structure1, structure2; [hit_type])
+
+Tree edit distance between two secondary structures `structure1` and
+`structure2`.
+"""
 function tree_edit_dist(structure1::AbstractString, structure2::AbstractString;
                         hit_type::Integer = LibRNA.VRNA_STRUCTURE_TREE_HIT)
     # vrna_db_to_tree_string prints result to stdout, which we discard
@@ -186,6 +219,13 @@ end
 
 # mean basepair distance of ensemble to itself
 
+"""
+    mean_bp_distance(fc)
+    mean_bp_distance(sequence)
+
+Base-pair distance of all possible pairs of secondary structures
+weighted by their Boltzmann probabilities.
+"""
 function mean_bp_distance(fc::FoldCompound)
     has_exp_matrices(fc) ||
         throw(ArgumentError("partfn(fc::FoldCompound) must be run first"))
@@ -201,6 +241,16 @@ end
 # ensemble defect: mean distance of ensemble to a target structure
 # TODO: check if this is exactly expected basepair distance to target struct
 
+"""
+    ensemble_defect(fc, pt)
+    ensemble_defect(sequence, pt)
+    ensemble_defect(fc, structure)
+    ensemble_defect(sequence, structure)
+
+Ensemble defect between a sequence given as a `FoldCompound` or
+`AbstractString` in dot-bracket notation and a secondary structure
+given as a `Pairtable` or as an `AbstractString`.
+"""
 function ensemble_defect(fc::FoldCompound, pt::Pairtable)
     has_exp_matrices(fc) ||
         throw(ArgumentError("partfn(::FoldCompound) must be run first"))
@@ -226,6 +276,12 @@ end
 
 # probability of a structure in the ensemble
 
+"""
+    prob_of_structure(fc, structure)
+    prob_of_structure(sequence, structure)
+
+Boltzmann probability of a structure for a sequence.
+"""
 function prob_of_structure(fc::FoldCompound, structure::AbstractString)
     has_exp_matrices(fc) ||
         throw(ArgumentError("must first call ViennaRNA.partfn(::FoldCompound)"))
@@ -242,6 +298,13 @@ end
 
 # free energy change of folding
 
+"""
+    energy(fc, structure; [verbose])
+    energy(sequence, structure; [verbose])
+
+Calculate the free energy of folding for a given `sequence` and
+`structure` in dot-bracket notation.
+"""
 function energy(fc::FoldCompound,
                 structure::AbstractString;
                 verbose::Bool=false,
@@ -269,6 +332,12 @@ end
 
 # minimum free energy (mfe) structure
 
+"""
+    mfe(fc)
+    mfe(sequence)
+
+Calculate the minimum free energy structure and energy.
+"""
 function mfe(fc::FoldCompound)
     seqlen = length(fc)
     cstr_structure = Ptr{Cchar}(LibRNA.vrna_alloc(seqlen + 1))
@@ -283,6 +352,13 @@ mfe(sequence::AbstractString) =
 
 # partition function
 
+"""
+    partfn(fc)
+    partfn(sequence)
+
+Calculate the partition function and a string representation of
+secondary structure pairing probabilities.
+"""
 function partfn(fc::FoldCompound)
     seqlen = length(fc)
     cstr_structure = Ptr{Cchar}(LibRNA.vrna_alloc(seqlen + 1))
@@ -296,6 +372,12 @@ partfn(sequence::AbstractString) = partfn(FoldCompound(sequence))
 
 # basepair probabilities
 
+"""
+    bpp(fc)
+    bpp(sequence)
+
+Calculate the matrix of base-pair probabilities.
+"""
 function bpp(fc::FoldCompound)
     # TODO: return upper triangular matrix type
     has_exp_matrices(fc) ||
@@ -321,6 +403,13 @@ end
 
 # stochastic backtrack
 
+"""
+    pbacktrack(fc; [num_samples=1])
+    pbacktrack(sequence; [num_samples=1])
+
+Sample `num_samples` secondary structures according to their Boltzmann
+probabilities.
+"""
 function pbacktrack(fc::FoldCompound;
                     num_samples::Integer=1,
                     options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
@@ -349,6 +438,12 @@ end
 
 # maximum expected accuracy (MEA) structure
 
+"""
+    mea(fc); [gamma=1.0])
+    mea(sequence); [gamma=1.0])
+
+Maximum expected accuracy (MEA) structure.
+"""
 function mea(fc::FoldCompound; gamma=1.0)
     has_exp_matrices(fc) ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
@@ -369,6 +464,14 @@ end
 
 # centroid structure of ensemble
 
+"""
+    centroid(fc)
+    centroid(sequence)
+
+Centroid structure of the ensemble, the secondary structure with the
+smallest Boltzmann probability weighted base-pair distance to all
+other structures.
+"""
 function centroid(fc::FoldCompound)
     has_exp_matrices(fc) ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
@@ -390,6 +493,13 @@ end
 
 # suboptimal structures
 
+"""
+    subopt(fc; [delta], [sorted])
+    subopt(sequence; [delta], [sorted])
+
+All suboptimal structures with an energy not more than `delta` above
+the minimum free energy structure.
+"""
 function subopt(fc::FoldCompound; delta::Quantity, sorted::Bool=true)
 #    fc.ptr.params.model_details.uniq_ML[] == 1 ||
 #        throw(ArgumentError("must have fc.params.model_details.uniq_ML == 1"))
@@ -415,6 +525,12 @@ function subopt(sequence::AbstractString; delta::Quantity, sorted::Bool=true)
     return subopt(fc; delta, sorted)
 end
 
+"""
+    subopt_zuker(fc)
+    subopt_zuker(sequence)
+
+All suboptimal structures according to the Zuker algorithm.
+"""
 function subopt_zuker(fc::FoldCompound)
     subs = Tuple{String,Quantity}[]
     s = LibRNA.vrna_subopt_zuker(fc.ptr)
@@ -435,6 +551,15 @@ end
 
 # inverse folding / sequence design
 
+"""
+    inverse_fold(start, target)
+
+Inverse folding (aka sequence design) for a given `target` structure,
+starting from the sequence `start`.
+
+The stopping criterion for the search is that the sequence has the
+target structure as its minimum free energy structure.
+"""
 function inverse_fold(start::AbstractString, target::AbstractString)
     length(start) == length(target) ||
         throw(ArgumentError("start and target must have same size"))
@@ -445,6 +570,15 @@ function inverse_fold(start::AbstractString, target::AbstractString)
     return design, dist
 end
 
+"""
+    inverse_pf_fold(start, target)
+
+Inverse folding (aka sequence design) for a given `target` structure,
+starting from the sequence `start`.
+
+The search in sequence space tries to maximise the probability of the
+target structure.
+"""
 function inverse_pf_fold(start::AbstractString, target::AbstractString)
     length(start) == length(target) ||
         throw(ArgumentError("start and target must have same size"))
@@ -457,6 +591,11 @@ end
 
 # kinetics and move sets
 
+"""
+    neighbors(fc, pt)
+
+All neighbors of a secondary structure `pt` given as a `Pairtable`.
+"""
 function neighbors(fc::FoldCompound, pt::Pairtable;
                    options::Int=LibRNA.VRNA_MOVESET_DEFAULT)
     mptr = LibRNA.vrna_neighbors(fc.ptr, pt.ptr, options)
@@ -487,6 +626,13 @@ end
 
 # plotting secondary structures
 
+"""
+    plot_coords(structure; [plot_type])
+
+Plots a secondary structure, returning the coordinates. The optional
+`plot_type` parameter can be `:simple`, `:naview`, `:circular`,
+`:turtle`, or `:puzzler`, with the default being `:naview`.
+"""
 function plot_coords(structure; plot_type::Symbol=:naview)
     _vrna_plot_coords(structure::AbstractString, cx, cy, type) =
         LibRNA.vrna_plot_coords(structure, cx, cy, type)
