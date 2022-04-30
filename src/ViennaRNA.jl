@@ -390,6 +390,7 @@ function bpp(fc::FoldCompound)
     for i = 1:n-1
         for j = i+1:n
             p[i,j] = unsafe_load(probs, unsafe_load(index, i + 1) - j + 1)
+            p[j,i] = p[i,j]
         end
     end
     return p
