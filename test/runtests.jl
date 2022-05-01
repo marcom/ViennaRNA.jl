@@ -249,3 +249,5 @@ end
     @test_throws ArgumentError x, y = ViennaRNA.plot_coords(s; plot_type = :unknown)
     @test_throws ArgumentError x, y = ViennaRNA.plot_coords(pt; plot_type = :unknown)
 end
+
+include("utils.jl")
