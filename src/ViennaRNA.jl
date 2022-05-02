@@ -6,7 +6,9 @@ using Unitful: @u_str, Quantity, uconvert, ustrip
 export FoldCompound, Pairtable, bp_distance, bpp, centroid, energy,
     ensemble_defect, inverse_fold, inverse_pf_fold, mea,
     mean_bp_distance, mfe, neighbors, partfn, pbacktrack, plot_coords,
-    prob_of_basepairs, prob_of_structure, subopt, subopt_zuker, tree_edit_dist
+    prob_of_structure, subopt, subopt_zuker, tree_edit_dist
+export prob_of_basepairs
+export plot_structure
 
 include("../lib/LibRNA.jl")
 import .LibRNA
@@ -669,5 +671,6 @@ function plot_coords(structure; plot_type::Symbol=:naview)
 end
 
 include("utils.jl")
+include("plot_structure.jl")
 
 end # module ViennaRNA
