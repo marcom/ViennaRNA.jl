@@ -93,4 +93,10 @@ plot_coords("(((...)))")        # => Tuple{Float32[], Float32[]}
 # inverse folding / sequence design
 inverse_fold("AAAAAAA", "((...))")    # => ("GCAAAGC", 2.0f0)
 inverse_pf_fold("AAAAAAA", "((...))") # => ("GCCAAGC", 2.0244526863098145 kcal mol^-1)
+
+# plot secondary structure
+plot_structure("((...))"; sequence = "AAAAAAA")
+plot_structure("((...))"; sequence = "AAAAAAA", targetdir = "2dstructure.pdf")
+plot_structure("((...))"; sequence = "AAAAAAA", targetdir = "2dstructure.png")
+
 ```
