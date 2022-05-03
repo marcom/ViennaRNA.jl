@@ -17,7 +17,7 @@ Plot a secondary structure to a PNG image.
 """
 function plot_structure(structure::AbstractString;
                         sequence::AbstractString=" "^length(structure),
-                        layout_type::Symbol=:naview,
+                        layout_type::Symbol=:simple,
                         base_colors::Vector=zeros(length(structure)),
                         base_colorscheme::ColorScheme=colorschemes[:flag_id])
     # constants

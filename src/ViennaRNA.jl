@@ -636,7 +636,7 @@ Plots a secondary structure, returning the coordinates. The optional
 `plot_type` parameter can be `:simple`, `:naview`, `:circular`,
 `:turtle`, or `:puzzler`, with the default being `:naview`.
 """
-function plot_coords(structure; plot_type::Symbol=:naview)
+function plot_coords(structure; plot_type::Symbol=:simple)
     _vrna_plot_coords(structure::AbstractString, cx, cy, type) =
         LibRNA.vrna_plot_coords(structure, cx, cy, type)
     _vrna_plot_coords(structure::Pairtable, cx, cy, type) =
