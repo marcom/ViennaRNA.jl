@@ -56,6 +56,8 @@ end
     buf = IOBuffer()
     show(buf, MIME("text/plain"), pt)
     @test length(String(take!(buf))) > 0
+    # basepairs
+    @test Set(basepairs(Pairtable("(((...)))"))) == Set([(1,9), (2,8), (3,7)])
 end
 
 @testset "bp_distance" begin

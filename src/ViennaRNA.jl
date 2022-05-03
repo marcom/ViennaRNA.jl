@@ -3,7 +3,7 @@ module ViennaRNA
 import Base
 using Unitful: @u_str, Quantity, uconvert, ustrip
 
-export FoldCompound, Pairtable, bp_distance, bpp, centroid, energy,
+export FoldCompound, Pairtable, basepairs, bp_distance, bpp, centroid, energy,
     ensemble_defect, heat_capacity, inverse_fold, inverse_pf_fold, mea,
     mean_bp_distance, mfe, neighbors, partfn, pbacktrack, plot_coords,
     prob_of_structure, subopt, subopt_zuker, tree_edit_dist
@@ -139,6 +139,8 @@ mutable struct Pairtable
 end
 
 Base.length(pt::Pairtable) = Int(unsafe_load(pt.ptr, 1))
+
+basepairs(pt::Pairtable) = [(i, pt[i]) for i = 1:length(pt) if i < pt[i]]
 
 # Notes
 # - only works for unpseudoknotted structures
