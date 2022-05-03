@@ -642,6 +642,9 @@ function plot_coords(structure; plot_type::Symbol=:simple)
     _vrna_plot_coords(structure::Pairtable, cx, cy, type) =
         LibRNA.vrna_plot_coords_pt(structure.ptr, cx, cy, type)
 
+    if length(structure) == 0
+        return Float32[], Float32[]
+    end
     if plot_type === :simple
         type = LibRNA.VRNA_PLOT_TYPE_SIMPLE
     elseif plot_type === :naview
@@ -659,6 +662,9 @@ function plot_coords(structure; plot_type::Symbol=:simple)
     ptr_cx = Ptr{Ptr{Cfloat}}(LibRNA.vrna_alloc(sizeof(Ptr{Cfloat})))
     ptr_cy = Ptr{Ptr{Cfloat}}(LibRNA.vrna_alloc(sizeof(Ptr{Cfloat})))
     n = _vrna_plot_coords(structure, ptr_cx, ptr_cy, type)
+    if n == 0
+        throw(ErrorException("error returned by vrna_plot_coords"))
+    end
     cx = unsafe_load(ptr_cx)
     cy = unsafe_load(ptr_cy)
     x = [unsafe_load(cx, i) for i = 1:n]

@@ -227,15 +227,15 @@ end
 
 @testset "plot_coords" begin
     function test_plot_xy(s, x, y)
-        @test eltype(x) <: AbstractFloat
+        @test x isa Vector{Float32}
         @test length(x) == length(s)
-        @test eltype(y) <: AbstractFloat
+        @test y isa Vector{Float32}
         @test length(y) == length(s)
     end
     s = "(((...)))"
     pt = ViennaRNA.Pairtable(s)
 
-    # test: plot_coords(::String), plot_coords(::ViennaRNA.Pairtable)
+    # test: plot_coords(::String), plot_coords(::Pairtable)
     x, y = ViennaRNA.plot_coords(s)
     test_plot_xy(s, x, y)
     x, y = ViennaRNA.plot_coords(pt)
@@ -248,6 +248,11 @@ end
     end
     @test_throws ArgumentError x, y = ViennaRNA.plot_coords(s; plot_type = :unknown)
     @test_throws ArgumentError x, y = ViennaRNA.plot_coords(pt; plot_type = :unknown)
+    # zero-sized inputs
+    x, y = plot_coords("")
+    test_plot_xy("", x, y)
+    x, y = plot_coords(Pairtable(""))
+    test_plot_xy(Pairtable(""), x, y)
 end
 
 include("utils.jl")
