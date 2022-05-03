@@ -21,6 +21,10 @@ using Unitful
     fc = FoldCompound(seq; temperature=310u"K")
     @test length(fc) == 9
     @test_throws Unitful.DimensionError FoldCompound(seq; temperature=100u"m")
+    # circular
+    fc = FoldCompound(seq; circular=true)
+    @test length(fc) == 9
+    @test fc.circular == true
     # show
     buf = IOBuffer()
     show(buf, MIME("text/plain"), fc)

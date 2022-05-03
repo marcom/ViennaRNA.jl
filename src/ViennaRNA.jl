@@ -44,15 +44,17 @@ mutable struct FoldCompound
     params_name :: String
     temperature :: Quantity
     uniq_ML     :: Bool
+    circular    :: Bool
     function FoldCompound(seq::AbstractString,
                           model_details::Ptr{LibRNA.vrna_md_s},
                           options::Unsigned;
                           params_name::String,
                           temperature::Quantity=37.0u"°C",
-                          uniq_ML::Bool=false)
+                          uniq_ML::Bool=false,
+                          circular::Bool=false)
         ptr = LibRNA.vrna_fold_compound(seq, model_details, options)
         ptr != C_NULL || throw(ErrorException("pointer == C_NULL"))
-        fc = new(ptr, seq, params_name, temperature, uniq_ML)
+        fc = new(ptr, seq, params_name, temperature, uniq_ML, circular)
         finalizer(fc) do x
             # TODO: do we have to call vrna_mx_mfe_free or
             #       vrna_mx_pf_free here ourselves?
@@ -62,7 +64,7 @@ mutable struct FoldCompound
 end
 
 """
-    FoldCompound(seq; [params, temperature, uniq_ML])
+    FoldCompound(seq; [params, temperature, uniq_ML, circular])
 
 A `FoldCompound` encapsulates a nucleotide sequence, energy
 parameters, and model details.
@@ -72,13 +74,19 @@ Input arguments:
 - `params`: energy parameter set, legal values are `:RNA_Turner1999`,
   `:RNA_Turner2004`, `:RNA_Andronescu2007`, `:RNA_Langdon2018`, with
   the default being `:RNA_Turner2004`
+- `temperature`: the temperature at which calculations are performed,
+  the default is `37u"°C"`
 - `uniq_ML`: use unique decomposition for multiloops, needed for
   `pbacktrack` and `subopt`
+- `circular`: determines if the RNA strand is circular, i.e. the
+  5'-end and 3'-end are covalently bonded, with the default being
+  false
 """
 function FoldCompound(seq::AbstractString;
                       params::Symbol=:RNA_Turner2004,
                       temperature::Quantity=37.0u"°C",
                       uniq_ML::Bool=false,
+                      circular::Bool=false,
                       options::Unsigned=LibRNA.VRNA_OPTION_DEFAULT)
     # TODO: who frees md? hopefully vrna_fold_compound_free()
     #       otherwise possible memory leak
@@ -99,9 +107,11 @@ function FoldCompound(seq::AbstractString;
     end
     temperature_nounit = ustrip(uconvert(u"°C", temperature))
     LibRNA.vrna_md_defaults_temperature(temperature_nounit)
+    LibRNA.vrna_md_defaults_circ(Int(circular))
     LibRNA.vrna_md_defaults_uniq_ML(Int(uniq_ML))
     md = Ptr{LibRNA.vrna_md_s}(C_NULL)
-    return FoldCompound(seq, md, options; params_name, temperature, uniq_ML)
+    return FoldCompound(seq, md, options;
+                        params_name, temperature, uniq_ML, circular)
 end
 
 Base.length(fc::FoldCompound) = length(fc.seq)
@@ -109,7 +119,7 @@ Base.length(fc::FoldCompound) = length(fc.seq)
 has_exp_matrices(fc::FoldCompound) = unsafe_load(fc.ptr).exp_matrices != C_NULL
 
 function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
-    println(io, "FoldCompound, $(length(fc)) nt")
+    println(io, "FoldCompound, $(length(fc)) nt$(fc.circular ? " (circular)" : "")")
     println(io, "  params      = $(fc.params_name)")
     println(io, "  temperature = $(fc.temperature)")
     println(io, "  uniq_ML     = $(fc.uniq_ML)")
