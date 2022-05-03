@@ -122,3 +122,76 @@ plot_structure(pt::Pairtable;
                base_colorscheme::ColorScheme=colorschemes[:flag_id]) =
                    plot_structure(String(pt);
                                   sequence, base_colors, base_colorscheme)
+
+
+using CairoMakie
+
+
+"""
+    plot_structure(structure; [sequence, targetdir, layout_type, colorscheme])
+
+Plot a secondary structure to a PNG image or PDF file depending on targetdir ending.
+"""
+function plot_structure(structure::AbstractString;
+    sequence::AbstractString=" "^length(structure),
+    targetdir::String = "",
+    layout_type::Symbol=:simple,
+    colorscheme::Symbol=:lightrainbow
+    )
+    fc = FoldCompound(sequence)
+    partfn(fc)
+    pt = Pairtable(structure)
+    x_coords, y_coords = plot_coords(structure; plot_type=layout_type)
+
+    markersize = 125 / sqrt(length(structure))
+    positions = [(a, b) for (a, b) in zip(x_coords, y_coords)]
+    pairs = map(x -> abs.(x), filter(
+        x -> any(i -> i < 0, x), vcat(ViennaRNA.neighbors(fc, pt)...)))
+    f = Figure()
+    ax = Axis(f[1, 1])
+    xlims!(
+        round(Int, minimum(x_coords)) - 20,
+        round(Int, maximum(x_coords)) + 20)
+    ylims!(
+        round(Int, minimum(y_coords)) - 20,
+        round(Int, maximum(y_coords)) + 20)
+    hidedecorations!(ax)
+    hidespines!(ax)
+
+    for (pos_x, pos_y) in pairs
+        lines!(
+            [x_coords[pos_x], x_coords[pos_y]],
+            [y_coords[pos_x], y_coords[pos_y]],
+            color = :black,
+            linestyle = :dot,
+            linewidth = 1,
+        )
+    end
+    scatterlines!(ax, x_coords, y_coords,
+        markersize = markersize,
+        markercolor = prob_of_basepairs(fc, pt),
+        markercolormap = colorscheme,
+        markercolorrange = (0, 1), # probabilities [0, 1]
+        linewidth = 3,
+    )
+    text!(string.(collect(sequence)),
+        position = positions,
+        align = (:center, :center),
+        textsize = markersize / 2,
+    )
+    Colorbar(
+        f[2, 1],
+        vertical = false,
+        colormap = colorscheme,
+        width = 500,
+        height = 12,
+    )
+    ax.aspect = DataAspect()
+    if isempty(targetdir)
+        f
+    else
+        save(targetdir, f)
+        f
+    end
+end
+
