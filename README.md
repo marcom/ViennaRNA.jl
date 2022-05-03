@@ -21,7 +21,7 @@ using ViennaRNA, Unitful
 
 # sequence to be folded
 # params, temperature, uniq_ML are optional keyword arguments
-# - params sets the energy parameter set used, options are
+# - params determines the energy parameter set used, options are
 #   :RNA_Turner1999, :RNA_Turner2004, :RNA_Andronescu2007,
 #   :RNA_Langdon2018. The default is :RNA_Turner2004
 # - temperature is used to rescale the free energies with the formula
