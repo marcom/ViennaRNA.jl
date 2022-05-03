@@ -2003,6 +2003,28 @@ function vrna_fold_compound_add_callback(fc, f)
     ccall((:vrna_fold_compound_add_callback, libRNA), Cvoid, (Ptr{vrna_fold_compound_t}, Ptr{Cvoid}), fc, f)
 end
 
+# typedef void ( vrna_heat_capacity_callback ) ( float temp , float heat_capacity , void * data )
+const vrna_heat_capacity_callback = Cvoid
+
+struct vrna_heat_capacity_s
+    temperature::Cfloat
+    heat_capacity::Cfloat
+end
+
+const vrna_heat_capacity_t = vrna_heat_capacity_s
+
+function vrna_heat_capacity(fc, T_min, T_max, T_increment, mpoints)
+    ccall((:vrna_heat_capacity, libRNA), Ptr{vrna_heat_capacity_t}, (Ptr{vrna_fold_compound_t}, Cfloat, Cfloat, Cfloat, Cuint), fc, T_min, T_max, T_increment, mpoints)
+end
+
+function vrna_heat_capacity_cb(fc, T_min, T_max, T_increment, mpoints, cb, data)
+    ccall((:vrna_heat_capacity_cb, libRNA), Cint, (Ptr{vrna_fold_compound_t}, Cfloat, Cfloat, Cfloat, Cuint, Ptr{Cvoid}, Ptr{Cvoid}), fc, T_min, T_max, T_increment, mpoints, cb, data)
+end
+
+function vrna_heat_capacity_simple(sequence, T_min, T_max, T_increment, mpoints)
+    ccall((:vrna_heat_capacity_simple, libRNA), Ptr{vrna_heat_capacity_t}, (Ptr{Cchar}, Cfloat, Cfloat, Cfloat, Cuint), sequence, T_min, T_max, T_increment, mpoints)
+end
+
 function inverse_fold(start, target)
     ccall((:inverse_fold, libRNA), Cfloat, (Ptr{Cchar}, Ptr{Cchar}), start, target)
 end

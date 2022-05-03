@@ -18,6 +18,7 @@ accept_headers = [
     "equilibrium_probs.h",
     "eval.h",
     "fold_compound.h",
+    "heat_capacity.h",
     "inverse.h",
     "landscape/neighbor.h",
     "MEA.h",

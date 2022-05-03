@@ -255,5 +255,22 @@ end
     test_plot_xy(Pairtable(""), x, y)
 end
 
+@testset "heat_capacity" begin
+    s = "GGGAAACCC"
+    fc = FoldCompound(s)
+    Tmin = 10u"°C"
+    Tmax = 60u"°C"
+    Tincrement = 1u"°C"
+    mpoints = 2
+    # TODO: this range call doesn't work without ustrip
+    n = length(range(start=ustrip(Tmin), stop=ustrip(Tmax), step=ustrip(Tincrement)))
+    hcs = heat_capacity(fc, Tmin, Tmax, Tincrement, mpoints)
+    @test hcs isa Vector{Tuple{typeof(1.0f0u"°C"),typeof(1.0f0u"kcal/mol/K")}}
+    @test length(hcs) == n
+    hcs = heat_capacity(fc, Tmin, Tmax, Tincrement, mpoints)
+    @test hcs isa Vector{Tuple{typeof(1.0f0u"°C"),typeof(1.0f0u"kcal/mol/K")}}
+    @test length(hcs) == n
+end
+
 include("utils.jl")
 include("plot_structure.jl")

@@ -4,7 +4,7 @@ import Base
 using Unitful: @u_str, Quantity, uconvert, ustrip
 
 export FoldCompound, Pairtable, bp_distance, bpp, centroid, energy,
-    ensemble_defect, inverse_fold, inverse_pf_fold, mea,
+    ensemble_defect, heat_capacity, inverse_fold, inverse_pf_fold, mea,
     mean_bp_distance, mfe, neighbors, partfn, pbacktrack, plot_coords,
     prob_of_structure, subopt, subopt_zuker, tree_edit_dist
 export prob_of_basepairs
@@ -674,6 +674,47 @@ function plot_coords(structure; plot_type::Symbol=:simple)
     Libc.free(ptr_cx)
     Libc.free(ptr_cy)
     return x, y
+end
+
+# heat capacity
+
+"""
+    heat_capacity(fc, Tmin, Tmax, [Tincrement=1u"°C", mpoints=2])
+    heat_capacity(sequence, Tmin, Tmax, [Tincrement=1u"°C", mpoints=2])
+
+Computes the specific heat of an RNA in a temperature range, given by
+`Tmin`, `Tmax`, and `Tincrement`, from the partition function by
+numeric differentiation.  The parameter `mpoints` determines how
+smooth the curve should be: to calculate second derivatives, a
+parabola is fit to `mpoints` + 1 data points, and increasing the
+`mpoints` parameter produces a smoother curve.
+"""
+function heat_capacity(fc::FoldCompound, Tmin::Quantity, Tmax::Quantity,
+                       Tincrement::Quantity=1u"°C", mpoints::Integer=2)
+    Tmin = ustrip(uconvert(u"°C", Tmin))
+    Tmax = ustrip(uconvert(u"°C", Tmax))
+    Tincrement = ustrip(uconvert(u"°C", Tincrement))
+    type_T = typeof(1.0f0u"°C")
+    type_c = typeof(1.0f0u"kcal/mol/K")
+    ptr = LibRNA.vrna_heat_capacity(fc.ptr, Tmin, Tmax, Tincrement, mpoints)
+    if ptr == C_NULL
+        error("failure running vrna_heat_capacity")
+    end
+    hcs = Tuple{type_T, type_c}[]
+    i = 1
+    while (h = unsafe_load(ptr, i)).temperature >= Tmin
+        T = h.temperature * u"°C"
+        c = h.heat_capacity * u"kcal/mol/K"
+        push!(hcs, (T, c))
+        i += 1
+    end
+    Libc.free(ptr)
+    return hcs
+end
+
+function heat_capacity(sequence::AbstractString, Tmin::Quantity, Tmax::Quantity,
+                       Tincrement::Quantity=1.0u"°C", mpoints::Integer=2)
+    heat_capacity(FoldCompound(sequence), Tmin, Tmax, Tincrement, mpoints)
 end
 
 include("utils.jl")
