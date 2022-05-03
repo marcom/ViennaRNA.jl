@@ -143,10 +143,10 @@ function plot_structure(structure::AbstractString;
     pt = Pairtable(structure)
     x_coords, y_coords = plot_coords(structure; plot_type=layout_type)
 
-    markersize = 125 / sqrt(length(structure))
+    markersize = 100 / sqrt(length(structure))
     positions = [(a, b) for (a, b) in zip(x_coords, y_coords)]
     pairs = map(x -> abs.(x), filter(
-        x -> any(i -> i < 0, x), vcat(ViennaRNA.neighbors(fc, pt)...)))
+        x -> any(i -> i < 0, x), vcat(neighbors(fc, pt)...)))
     f = Figure()
     ax = Axis(f[1, 1])
     xlims!(
