@@ -105,9 +105,7 @@ function plot_structure(structure::AbstractString;
 	    end
 	end
 	# basepairs
-	for i = 1:n
-	    j = pt[i]
-	    (j == 0 || i > j) && continue
+	for (i,j) in basepairs(pt)
             draw_basepair(xs[i], ys[i], xs[j], ys[j])
 	end
         # bases (these must come last, as we overwrite too long
@@ -146,7 +144,7 @@ function plot_structure_makie(
 
     markersize = 100 / sqrt(length(structure))
     positions = [(a, b) for (a, b) in zip(x_coords, y_coords)]
-    pairs = [(i, pt[i]) for i = 1:length(pt) if i < pt[i]]
+    pairs = basepairs(pt)
     f = Figure()
     ax = Axis(f[1, 1])
     xlims!(
