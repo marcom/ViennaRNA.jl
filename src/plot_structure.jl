@@ -132,11 +132,13 @@ using CairoMakie
 
 Plot a secondary structure to a PNG image or PDF file depending on targetdir ending.
 """
-function plot_structure_makie(structure::AbstractString;
-                        sequence::AbstractString=" "^length(structure),
-                        filepath::String = "",
-                        layout_type::Symbol=:simple,
-                        colorscheme::Symbol=:lightrainbow)
+function plot_structure(
+    structure::AbstractString;
+    sequence::AbstractString=" "^length(structure),
+    filepath::String = "",
+    layout_type::Symbol=:simple,
+    colorscheme::Symbol=:lightrainbow)
+
     fc = FoldCompound(sequence)
     partfn(fc)
     pt = Pairtable(structure)
@@ -147,8 +149,12 @@ function plot_structure_makie(structure::AbstractString;
     pairs = [(i, pt[i]) for i = 1:length(pt) if i < pt[i]]
     f = Figure()
     ax = Axis(f[1, 1])
-    xlims!(round(Int, minimum(x_coords)) - 20, round(Int, maximum(x_coords)) + 20)
-    ylims!(round(Int, minimum(y_coords)) - 20, round(Int, maximum(y_coords)) + 20)
+    xlims!(
+        round(Int, minimum(x_coords)) - 20,
+        round(Int, maximum(x_coords)) + 20)
+    ylims!(
+        round(Int, minimum(y_coords)) - 20,
+        round(Int, maximum(y_coords)) + 20)
     hidedecorations!(ax)
     hidespines!(ax)
 
