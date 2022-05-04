@@ -132,12 +132,11 @@ using CairoMakie
 
 Plot a secondary structure to a PNG image or PDF file depending on targetdir ending.
 """
-function plot_structure(structure::AbstractString;
-    sequence::AbstractString=" "^length(structure),
-    targetdir::String = "",
-    layout_type::Symbol=:simple,
-    colorscheme::Symbol=:lightrainbow
-    )
+function plot_structure_makie(structure::AbstractString;
+                        sequence::AbstractString=" "^length(structure),
+                        filepath::String = "",
+                        layout_type::Symbol=:simple,
+                        colorscheme::Symbol=:lightrainbow)
     fc = FoldCompound(sequence)
     partfn(fc)
     pt = Pairtable(structure)
@@ -145,23 +144,18 @@ function plot_structure(structure::AbstractString;
 
     markersize = 100 / sqrt(length(structure))
     positions = [(a, b) for (a, b) in zip(x_coords, y_coords)]
-    pairs = map(x -> abs.(x), filter(
-        x -> any(i -> i < 0, x), vcat(neighbors(fc, pt)...)))
+    pairs = [(i, pt[i]) for i = 1:length(pt) if i < pt[i]]
     f = Figure()
     ax = Axis(f[1, 1])
-    xlims!(
-        round(Int, minimum(x_coords)) - 20,
-        round(Int, maximum(x_coords)) + 20)
-    ylims!(
-        round(Int, minimum(y_coords)) - 20,
-        round(Int, maximum(y_coords)) + 20)
+    xlims!(round(Int, minimum(x_coords)) - 20, round(Int, maximum(x_coords)) + 20)
+    ylims!(round(Int, minimum(y_coords)) - 20, round(Int, maximum(y_coords)) + 20)
     hidedecorations!(ax)
     hidespines!(ax)
 
-    for (pos_x, pos_y) in pairs
+    for (i, j) in pairs
         lines!(
-            [x_coords[pos_x], x_coords[pos_y]],
-            [y_coords[pos_x], y_coords[pos_y]],
+            [x_coords[i], x_coords[j]],
+            [y_coords[i], y_coords[j]],
             color = :black,
             linestyle = :dot,
             linewidth = 1,
@@ -187,11 +181,8 @@ function plot_structure(structure::AbstractString;
         height = 12,
     )
     ax.aspect = DataAspect()
-    if isempty(targetdir)
-        f
-    else
-        save(targetdir, f)
-        f
+    if ! isempty(filepath)
+        save(filepath, f)
     end
+    return f
 end
-
