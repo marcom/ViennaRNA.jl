@@ -132,7 +132,7 @@ using CairoMakie
 
 Plot a secondary structure to a PNG image or PDF file depending on targetdir ending.
 """
-function plot_structure(
+function plot_structure_makie(
     structure::AbstractString;
     sequence::AbstractString=" "^length(structure),
     filepath::String = "",
