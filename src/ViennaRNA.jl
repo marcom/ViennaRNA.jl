@@ -370,8 +370,12 @@ mfe(sequence::AbstractString) =
     partfn(fc)
     partfn(sequence)
 
-Calculate the partition function and a string representation of
-secondary structure pairing probabilities.
+Calculate the partition function, returning a string representation of
+secondary structure pairing probabilities and the ensemble free energy
+`-RT log Z`.  The string consists of the letters `. , | { } ( )` which
+denote bases that are essentially unpaired, weakly paired, strongly
+paired without upstream/downstream preference, weakly
+upstream/downstream paired, or strongly upstream/downstream paired.
 """
 function partfn(fc::FoldCompound)
     seqlen = length(fc)
