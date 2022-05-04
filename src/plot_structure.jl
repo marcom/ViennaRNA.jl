@@ -122,3 +122,73 @@ plot_structure(pt::Pairtable;
                base_colorscheme::ColorScheme=colorschemes[:flag_id]) =
                    plot_structure(String(pt);
                                   sequence, base_colors, base_colorscheme)
+
+
+using CairoMakie
+
+
+"""
+    plot_structure(structure; [sequence, targetdir, layout_type, colorscheme])
+
+Plot a secondary structure to a PNG image or PDF file depending on targetdir ending.
+"""
+function plot_structure_makie(
+    structure::AbstractString;
+    sequence::AbstractString=" "^length(structure),
+    filepath::String = "",
+    layout_type::Symbol=:simple,
+    colorscheme::Symbol=:lightrainbow)
+
+    fc = FoldCompound(sequence)
+    partfn(fc)
+    pt = Pairtable(structure)
+    x_coords, y_coords = plot_coords(structure; plot_type=layout_type)
+
+    markersize = 100 / sqrt(length(structure))
+    positions = [(a, b) for (a, b) in zip(x_coords, y_coords)]
+    pairs = [(i, pt[i]) for i = 1:length(pt) if i < pt[i]]
+    f = Figure()
+    ax = Axis(f[1, 1])
+    xlims!(
+        round(Int, minimum(x_coords)) - 20,
+        round(Int, maximum(x_coords)) + 20)
+    ylims!(
+        round(Int, minimum(y_coords)) - 20,
+        round(Int, maximum(y_coords)) + 20)
+    hidedecorations!(ax)
+    hidespines!(ax)
+
+    for (i, j) in pairs
+        lines!(
+            [x_coords[i], x_coords[j]],
+            [y_coords[i], y_coords[j]],
+            color = :black,
+            linestyle = :dot,
+            linewidth = 1,
+        )
+    end
+    scatterlines!(ax, x_coords, y_coords,
+        markersize = markersize,
+        markercolor = prob_of_basepairs(fc, pt),
+        markercolormap = colorscheme,
+        markercolorrange = (0, 1), # probabilities [0, 1]
+        linewidth = 3,
+    )
+    text!(string.(collect(sequence)),
+        position = positions,
+        align = (:center, :center),
+        textsize = markersize / 2,
+    )
+    Colorbar(
+        f[2, 1],
+        vertical = false,
+        colormap = colorscheme,
+        width = 500,
+        height = 12,
+    )
+    ax.aspect = DataAspect()
+    if ! isempty(filepath)
+        save(filepath, f)
+    end
+    return f
+end
