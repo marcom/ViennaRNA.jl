@@ -7,6 +7,7 @@ using Unitful
     @test length(FoldCompound(seq)) == 9
     fc = FoldCompound(seq; uniq_ML=true)
     @test length(fc) == 9
+    @test size(fc) == (9,)
     # TODO
     # @test fc.ptr.params.model_details.uniq_ML[] == 1
     fc = FoldCompound(seq; options=ViennaRNA.LibRNA.VRNA_OPTION_MFE)
@@ -25,6 +26,11 @@ using Unitful
     fc = FoldCompound(seq; circular=true)
     @test length(fc) == 9
     @test fc.circular == true
+    # multiple strands
+    fc = FoldCompound("GGG&AAA&CCC")
+    @test length(fc) == 9
+    @test size(fc) == (3, 3, 3)
+    @test nstrands(fc) == 3
     # show
     buf = IOBuffer()
     show(buf, MIME("text/plain"), fc)

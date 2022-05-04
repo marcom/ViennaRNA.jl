@@ -3,12 +3,15 @@ module ViennaRNA
 import Base
 using Unitful: @u_str, Quantity, uconvert, ustrip
 
-export FoldCompound, Pairtable, basepairs, bp_distance, bpp, centroid, energy,
-    ensemble_defect, heat_capacity, inverse_fold, inverse_pf_fold, mea,
+# types
+export FoldCompound, Pairtable
+# wrapper functions
+export bp_distance, bpp, centroid, energy, ensemble_defect,
+    heat_capacity, inverse_fold, inverse_pf_fold, mea,
     mean_bp_distance, mfe, neighbors, partfn, pbacktrack, plot_coords,
     prob_of_structure, subopt, subopt_zuker, tree_edit_dist
-export prob_of_basepairs
-export plot_structure
+# additional utility functions
+export basepairs, nstrands, plot_structure, prob_of_basepairs
 
 include("../lib/LibRNA.jl")
 import .LibRNA
@@ -40,7 +43,7 @@ const en_int_unit = 0.01u"kcal/mol"
 
 mutable struct FoldCompound
     ptr         :: Ptr{LibRNA.vrna_fc_s}
-    seq         :: String
+    strands     :: Vector{String}
     params_name :: String
     temperature :: Quantity
     uniq_ML     :: Bool
@@ -54,7 +57,8 @@ mutable struct FoldCompound
                           circular::Bool=false)
         ptr = LibRNA.vrna_fold_compound(seq, model_details, options)
         ptr != C_NULL || throw(ErrorException("pointer == C_NULL"))
-        fc = new(ptr, seq, params_name, temperature, uniq_ML, circular)
+        strands = string.(split(seq, '&'))
+        fc = new(ptr, strands, params_name, temperature, uniq_ML, circular)
         finalizer(fc) do x
             # TODO: do we have to call vrna_mx_mfe_free or
             #       vrna_mx_pf_free here ourselves?
@@ -114,16 +118,25 @@ function FoldCompound(seq::AbstractString;
                         params_name, temperature, uniq_ML, circular)
 end
 
-Base.length(fc::FoldCompound) = length(fc.seq)
+Base.length(fc::FoldCompound) = sum(size(fc))
+
+Base.size(fc::FoldCompound) = ntuple(i -> length(fc.strands[i]), nstrands(fc))
+
+nstrands(fc::FoldCompound) = length(fc.strands)
 
 has_exp_matrices(fc::FoldCompound) = unsafe_load(fc.ptr).exp_matrices != C_NULL
 
 function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
-    println(io, "FoldCompound, $(length(fc)) nt$(fc.circular ? " (circular)" : "")")
+    strand = "$(nstrands(fc)) strand" * (nstrands(fc) > 1 ? "s" : "")
+    nt = "$(length(fc)) nt$(nstrands(fc) > 1 ? " total" : "")"
+    circ = "$(fc.circular ? " (circular)" : "")"
+    println(io, "FoldCompound, $strand, $nt$circ")
     println(io, "  params      = $(fc.params_name)")
     println(io, "  temperature = $(fc.temperature)")
     println(io, "  uniq_ML     = $(fc.uniq_ML)")
-    print(io,   "  sequence    = $(fc.seq)")
+    for (i,s) in enumerate(fc.strands)
+        println(io,   "  strand $i    = $(s)")
+    end
 end
 
 """
