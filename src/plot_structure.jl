@@ -1,6 +1,10 @@
 using Statistics: mean
 using ColorSchemes: ColorScheme, colorschemes
 using Luxor: @draw, background, circle, fontsize, line, Point, sethue, text
+using CairoMakie: Axis, Colorbar, DataAspect, Figure,
+    hidedecorations!, hidespines!, lines!, scatterlines!, text!,
+    xlims!, ylims!
+
 
 # TODO
 # - text font for bases
@@ -123,14 +127,10 @@ plot_structure(pt::Pairtable;
                    plot_structure(String(pt);
                                   sequence, base_colors, base_colorscheme)
 
-
-using CairoMakie
-
-
 """
-    plot_structure(structure; [sequence, targetdir, layout_type, colorscheme])
+    plot_structure_makie(structure; [sequence, filepath, layout_type, colorscheme])
 
-Plot a secondary structure to a PNG image or PDF file depending on targetdir ending.
+Plot a secondary structure to a PNG image or PDF file depending on `filepath` ending.
 """
 function plot_structure_makie(
     structure::AbstractString;
