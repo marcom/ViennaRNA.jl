@@ -92,6 +92,7 @@ centroid(fc)                    # => ("(((((.....))))).", 4.799131457924728)
 mea(fc; gamma=1.0)              # => ("(((((.....))))).", 10.706348f0)
 
 # heat capacity calculation
+# starting temperature, end temperature, temperature increment
 heat_capacity(fc, 10u"°C", 60u"°C")    # => Vector{Tuple{Quantity,Quantity}}
 heat_capacity(fc, 10u"°C", 60u"°C", 1u"°C"; mpoints=5)
 
