@@ -276,10 +276,17 @@ end
     mpoints = 2
     # TODO: this range call doesn't work without ustrip
     n = length(range(start=ustrip(Tmin), stop=ustrip(Tmax), step=ustrip(Tincrement)))
-    hcs = heat_capacity(fc, Tmin, Tmax, Tincrement, mpoints)
+
+    hcs = heat_capacity(fc, Tmin, Tmax, Tincrement; mpoints)
     @test hcs isa Vector{Tuple{typeof(1.0f0u"°C"),typeof(1.0f0u"kcal/mol/K")}}
     @test length(hcs) == n
-    hcs = heat_capacity(fc, Tmin, Tmax, Tincrement, mpoints)
+    hcs = heat_capacity(fc, Tmin, Tmax; mpoints)
+    @test hcs isa Vector{Tuple{typeof(1.0f0u"°C"),typeof(1.0f0u"kcal/mol/K")}}
+    @test length(hcs) == n
+    hcs = heat_capacity(s, Tmin, Tmax, Tincrement; mpoints)
+    @test hcs isa Vector{Tuple{typeof(1.0f0u"°C"),typeof(1.0f0u"kcal/mol/K")}}
+    @test length(hcs) == n
+    hcs = heat_capacity(s, Tmin, Tmax; mpoints)
     @test hcs isa Vector{Tuple{typeof(1.0f0u"°C"),typeof(1.0f0u"kcal/mol/K")}}
     @test length(hcs) == n
 end

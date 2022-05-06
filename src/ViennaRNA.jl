@@ -708,8 +708,8 @@ end
 # heat capacity
 
 """
-    heat_capacity(fc, Tmin, Tmax, [Tincrement=1u"°C", mpoints=2])
-    heat_capacity(sequence, Tmin, Tmax, [Tincrement=1u"°C", mpoints=2])
+    heat_capacity(fc, Tmin, Tmax, [Tincrement=1u"°C"]; [mpoints=2])
+    heat_capacity(sequence, Tmin, Tmax, [Tincrement=1u"°C"]; [mpoints=2])
 
 Computes the specific heat of an RNA in a temperature range, given by
 `Tmin`, `Tmax`, and `Tincrement`, from the partition function by
@@ -719,7 +719,7 @@ parabola is fit to `mpoints` + 1 data points, and increasing the
 `mpoints` parameter produces a smoother curve.
 """
 function heat_capacity(fc::FoldCompound, Tmin::Quantity, Tmax::Quantity,
-                       Tincrement::Quantity=1u"°C", mpoints::Integer=2)
+                       Tincrement::Quantity=1u"°C"; mpoints::Integer=2)
     Tmin = ustrip(uconvert(u"°C", Tmin))
     Tmax = ustrip(uconvert(u"°C", Tmax))
     Tincrement = ustrip(uconvert(u"°C", Tincrement))
@@ -742,8 +742,8 @@ function heat_capacity(fc::FoldCompound, Tmin::Quantity, Tmax::Quantity,
 end
 
 function heat_capacity(sequence::AbstractString, Tmin::Quantity, Tmax::Quantity,
-                       Tincrement::Quantity=1.0u"°C", mpoints::Integer=2)
-    heat_capacity(FoldCompound(sequence), Tmin, Tmax, Tincrement, mpoints)
+                       Tincrement::Quantity=1.0u"°C"; mpoints::Integer=2)
+    heat_capacity(FoldCompound(sequence), Tmin, Tmax, Tincrement; mpoints)
 end
 
 include("utils.jl")
