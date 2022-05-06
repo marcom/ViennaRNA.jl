@@ -20,19 +20,24 @@ using ViennaRNA, Unitful
 # sequence instead of a FoldCompound, e.g. `mfe("GGGAAACCC")`.
 
 # sequence to be folded
-# params, temperature, uniq_ML are optional keyword arguments
+# optional keyword arguments:
 # - params determines the energy parameter set used, options are
 #   :RNA_Turner1999, :RNA_Turner2004, :RNA_Andronescu2007,
 #   :RNA_Langdon2018. The default is :RNA_Turner2004
 # - temperature is used to rescale the free energies with the formula
 #   ΔG = ΔH - TΔS (the energy parameter sets contain enthalpy and
 #   entropy contributions). The default is 37u"°C"
+# - circular=false if RNA strand is circular
 # - uniq_ML=true (unique multiloop decomposition) is needed for some
 #   functions, e.g. pbacktrack. The default is false
 fc = FoldCompound("GGGGGAAAAACCCCCC";
-		  params=:RNA_Turner2004,
-		  temperature=37u"°C",
-		  uniq_ML=true)
+                  params=:RNA_Turner2004,
+                  temperature=37u"°C",
+                  uniq_ML=true,
+                  circular=false)
+
+# mutiple strands can be given by separating them with an '&':
+# FoldCompound("GGGG&CCCC")
 
 # minimum free energy structure (MFE) for a sequence
 # please excuse the excess precision printed when displaying -9.4 kcal/mol
@@ -86,9 +91,23 @@ centroid(fc)                    # => ("(((((.....))))).", 4.799131457924728)
 # trades off specificity (low gamma) and sensitivity (high gamma).
 mea(fc; gamma=1.0)              # => ("(((((.....))))).", 10.706348f0)
 
+# heat capacity calculation
+heat_capacity(fc, 10u"°C", 60u"°C")    # => Vector{Tuple{Quantity,Quantity}}
+heat_capacity(fc, 10u"°C", 60u"°C", 1u"°C"; mpoints=5)
+
 # plot coordinates of a secondary structure, returns two arrays with
 # x and y coordinates
 plot_coords("(((...)))")        # => Tuple{Float32[], Float32[]}
+
+# plot_structure (experimental), draws an image of a secondary structure
+#
+# There is also an experimental plot_structure_makie which looks a bit
+# nicer but currently has a rather large time to first plot (half a
+# minute). See issue #5. Subsequent plots are very fast.
+dbn = "(((...)))"
+seq = "GGGAAACCC"
+plot_structure(dbn)
+plot_structure(dbn; sequence=seq, base_colors=prob_of_basepairs(seq, dbn))
 
 # inverse folding / sequence design
 inverse_fold("AAAAAAA", "((...))")    # => ("GCAAAGC", 2.0f0)
