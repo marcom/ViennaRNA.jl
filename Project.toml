@@ -15,7 +15,7 @@ ViennaRNA_jll = "b7a990de-7fa3-5a2e-8a39-d875e4dafecd"
 
 [compat]
 CEnum = "0.4"
-CairoMakie = "0.7"
+CairoMakie = "0.7, 0.8"
 ColorSchemes = "3"
 Luxor = "3"
 Unitful = "1.9"
