@@ -50,19 +50,19 @@ Optional keyword arguments
   functions, e.g. `pbacktrack`. The default is `false`
 
 
-Mutiple strands can be given by separating them with an `&`:
+Mutiple strands can be given by separating them with an `&`, e.g.
 `FoldCompound("GGGG&CCCC")`
 
 ### Minimum free energy structure (MFE)
 
 ```julia
 # please excuse the excess precision printed when displaying -9.4 kcal/mol
-mfe(fc)                         # => ("(((((.....))))).", -9.399999618530273 kcal mol^-1)
+mfe(fc)  # => ("(((((.....))))).", -9.399999618530273 kcal mol^-1)
 ```
 
 ### Partition function
 ```julia
-partfn(fc)                      # => ("(((((.....})))),", -9.81672180213034 kcal mol^-1)
+partfn(fc)  # => ("(((((.....})))),", -9.81672180213034 kcal mol^-1)
 ```
 
 ### Free energy change of folding into a structure
@@ -72,7 +72,7 @@ energy(fc, "((((.......)))).")  # => -6.199999809265137 kcal mol^-1
 
 ### Basepair probabilities
 ```julia
-bpp(fc)                         # => 16×16 Matrix{Float64}
+bpp(fc)  # => 16×16 Matrix{Float64}
 ```
 
 ### Boltzmann probability of a structure
@@ -105,7 +105,7 @@ subopt(fc; delta=4u"kcal/mol")  # => Vector{Tuple{String, Quantity}}
 Suboptimal structures with the method of Zuker
 
 ```julia
-subopt_zuker(fc)                # => Vector{Tuple{String, Quantity}}
+subopt_zuker(fc)  # => Vector{Tuple{String, Quantity}}
 ```
 
 # Neighboring structures
@@ -119,7 +119,7 @@ neighbors(fc, Pairtable("((.....))"))  # => Vector{Vector{Tuple{Int,Int}}}
 ### Basepair distance between secondary structures
 
 ```julia
-bp_distance("....", "(())")     # => 2
+bp_distance("....", "(())")  # => 2
 ```
 
 ### Tree edit distance between secondary structures
@@ -133,7 +133,7 @@ Mean basepair distance of all structures to each other, weighted by
 the structure's Boltzmann probabilities
 
 ```julia
-mean_bp_distance(fc)            # => 5.266430215905888
+mean_bp_distance(fc)  # => 5.266430215905888
 ```
 
 ### Centroid structure
@@ -142,7 +142,7 @@ Centroid structure of ensemble: structure with smallest sum of
 base-pair distances weighted by Boltzmann probabilities:
 
 ```julia
-centroid(fc)                    # => ("(((((.....))))).", 4.799131457924728)
+centroid(fc)  # => ("(((((.....))))).", 4.799131457924728)
 ```
 
 # Maximum expected accuracy (MEA) structure
@@ -150,14 +150,14 @@ centroid(fc)                    # => ("(((((.....))))).", 4.799131457924728)
 The gamma parameter trades off specificity (low gamma) and sensitivity (high gamma).
 
 ```julia
-mea(fc; gamma=1.0)              # => ("(((((.....))))).", 10.706348f0)
+mea(fc; gamma=1.0)  # => ("(((((.....))))).", 10.706348f0)
 ```
 
 ### Heat capacity calculation
 
 ```julia
 # starting temperature, end temperature, temperature increment
-heat_capacity(fc, 10u"°C", 60u"°C")    # => Vector{Tuple{Quantity,Quantity}}
+heat_capacity(fc, 10u"°C", 60u"°C")  # => Vector{Tuple{Quantity,Quantity}}
 heat_capacity(fc, 10u"°C", 60u"°C", 1u"°C"; mpoints=5)
 ```
 
@@ -178,12 +178,12 @@ plot_structure(dbn; sequence=seq, base_colors=prob_of_basepairs(seq, dbn))
 ```julia
 # plot coordinates of a secondary structure, returns two arrays with
 # x and y coordinates
-plot_coords("(((...)))")        # => Tuple{Float32[], Float32[]}
+plot_coords("(((...)))")  # => Tuple{Float32[], Float32[]}
 ```
 
 ### Inverse folding / sequence design
 
 ```julia
-inverse_fold("AAAAAAA", "((...))")    # => ("GCAAAGC", 2.0f0)
-inverse_pf_fold("AAAAAAA", "((...))") # => ("GCCAAGC", 2.0244526863098145 kcal mol^-1)
+inverse_fold("AAAAAAA", "((...))")     # => ("GCAAAGC", 2.0f0)
+inverse_pf_fold("AAAAAAA", "((...))")  # => ("GCCAAGC", 2.0244526863098145 kcal mol^-1)
 ```
