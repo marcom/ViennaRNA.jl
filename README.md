@@ -145,7 +145,7 @@ base-pair distances weighted by Boltzmann probabilities:
 centroid(fc)  # => ("(((((.....))))).", 4.799131457924728)
 ```
 
-# Maximum expected accuracy (MEA) structure
+### Maximum expected accuracy (MEA) structure
 
 The gamma parameter trades off specificity (low gamma) and sensitivity (high gamma).
 
@@ -184,6 +184,6 @@ plot_coords("(((...)))")  # => Tuple{Float32[], Float32[]}
 ### Inverse folding / sequence design
 
 ```julia
-inverse_fold("AAAAAAA", "((...))")     # => ("GCAAAGC", 2.0f0)
+inverse_fold("AAAAAAA", "((...))")     a# => ("GCAAAGC", 2.0f0)
 inverse_pf_fold("AAAAAAA", "((...))")  # => ("GCCAAGC", 2.0244526863098145 kcal mol^-1)
 ```
