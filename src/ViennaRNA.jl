@@ -87,10 +87,10 @@ mutable struct FoldCompound
         LibRNA.vrna_md_defaults_circ(Int(circular))
         LibRNA.vrna_md_defaults_uniq_ML(Int(uniq_ML))
 
-        if length(msa) > 1
-            ptr = LibRNA.vrna_fold_compound_comparative(msa, model_details, options)
+        ptr = if length(msa) == 1
+            LibRNA.vrna_fold_compound(first(msa), model_details, options)
         else
-            ptr = LibRNA.vrna_fold_compound(first(msa), model_details, options)
+            LibRNA.vrna_fold_compound_comparative(msa, model_details, options)
         end
         ptr != C_NULL || error("pointer == C_NULL")
 
