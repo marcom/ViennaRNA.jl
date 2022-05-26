@@ -50,11 +50,12 @@ mutable struct FoldCompound
     uniq_ML     :: Bool
     circular    :: Bool
 
-    function FoldCompound(msa::Vector{<:AbstractString},
-                          model_details::Ptr{LibRNA.vrna_md_s},
-                          options::Unsigned;
-                          params::Symbol,
-                          params_name::String,
+    FoldCompound(seq::AbstractString; kwargs...) = FoldCompound([seq]; kwargs...)
+    function FoldCompound(msa::Vector{<:AbstractString};
+                          model_details::Ptr{LibRNA.vrna_md_s}=Ptr{LibRNA.vrna_md_s}(C_NULL),
+                          options::Unsigned=LibRNA.VRNA_OPTION_DEFAULT,
+                          params::Symbol=:RNA_Turner2004,
+                          params_name::String = String(params),
                           temperature::Quantity=37.0u"°C",
                           uniq_ML::Bool=false,
                           circular::Bool=false)
@@ -63,6 +64,9 @@ mutable struct FoldCompound
                 error("all sequences in msa must have same length")
             end
             splits = findall.('&', msa)
+            if ! all(x -> x == Int[], splits)
+                error("multiple strands not supported in comparative mode (alifold)")
+            end
             if !reduce(==, splits)
                 error("strand split indicators '&' are in inconsistent columns in the msa")
             end
@@ -145,7 +149,6 @@ function FoldCompound(msa::Vector{<:AbstractString};
                       options::Unsigned=LibRNA.VRNA_OPTION_DEFAULT)
     # TODO: who frees md? hopefully vrna_fold_compound_free()
     #       otherwise possible memory leak
-    params_name = String(params)
     md = Ptr{LibRNA.vrna_md_s}(C_NULL)
     return FoldCompound(msa, md, options;
                         params, params_name, temperature, uniq_ML, circular)

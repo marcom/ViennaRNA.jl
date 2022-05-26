@@ -3,7 +3,7 @@ using ViennaRNA
 using Unitful
 
 @testset "FoldCompound" begin
-    for s in ["GGGAAACCC", ["GGG&AAA&CC-", "G-G&CCC&G-G"]]
+    for s in ["GGGAAACCC", ["GGG-A-CC-", "G-GGC-G-G"]]
         @test length(FoldCompound(s)) == 9
         fc = FoldCompound(s; uniq_ML=true)
         @test length(fc) == 9
@@ -36,10 +36,11 @@ using Unitful
     @test length(fc) == 9
     @test size(fc) == (3, 3, 3)
     @test nstrands(fc) == 3
-    fc = FoldCompound(["GGG&AAA&CCC", "G-G&AA-&CCA"])
-    @test length(fc) == 9
-    @test size(fc) == (3, 3, 3)
-    @test nstrands(fc) == 3
+    # multistrand alifold (not supported yet)
+    # fc = FoldCompound(["GGG&AAA&CCC", "G-G&AA-&CCA"])
+    # @test length(fc) == 9
+    # @test size(fc) == (3, 3, 3)
+    # @test nstrands(fc) == 3
 end
 
 @testset "Pairtable" begin
