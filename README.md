@@ -52,11 +52,11 @@ Optional keyword arguments
 #### Multiple strands
 
 Mutiple strands can be given by separating them with an `&`, e.g.
-`FoldCompound("GGGG&CCCC")`
+`FoldCompound("GGGG&CCCC")`.
 
 #### Comparative folding with an MSA (alifold)
 
-Pass multiple sequences to the FoldCompound constructor for comparative mode (alifold)
+Pass multiple sequences to the FoldCompound constructor for comparative mode (alifold):
 `FoldCompound(["GG-GAAAACCCC", "GCCGAAA-CGGC"])`.
 
 It is currently not possible to have multiple strands in alifold mode.
