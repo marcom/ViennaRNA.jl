@@ -3,38 +3,43 @@ using ViennaRNA
 using Unitful
 
 @testset "FoldCompound" begin
-    seq = "GGGAAACCC"
-    @test length(FoldCompound(seq)) == 9
-    fc = FoldCompound(seq; uniq_ML=true)
-    @test length(fc) == 9
-    @test size(fc) == (9,)
-    # TODO
-    # @test fc.ptr.params.model_details.uniq_ML[] == 1
-    fc = FoldCompound(seq; options=ViennaRNA.LibRNA.VRNA_OPTION_MFE)
-    @test length(fc) == 9
-    # use different energy parameter sets
-    fc = FoldCompound(seq; params=:RNA_Turner1999)
-    @test length(fc) == 9
-    @test_throws ArgumentError FoldCompound(seq; params=:UNKNOWN_ENERGY_PARAMS)
-    # use different temperatures to evaluate energies
-    fc = FoldCompound(seq; temperature=55u"°C")
-    @test length(fc) == 9
-    fc = FoldCompound(seq; temperature=310u"K")
-    @test length(fc) == 9
-    @test_throws Unitful.DimensionError FoldCompound(seq; temperature=100u"m")
-    # circular
-    fc = FoldCompound(seq; circular=true)
-    @test length(fc) == 9
-    @test fc.circular == true
+    for s in ["GGGAAACCC", ["GGG&AAA&CC-", "G-G&CCC&G-G"]]
+        @test length(FoldCompound(s)) == 9
+        fc = FoldCompound(s; uniq_ML=true)
+        @test length(fc) == 9
+        @test sum(size(fc)) == length(fc)
+        # TODO
+        # @test fc.ptr.params.model_details.uniq_ML[] == 1
+        fc = FoldCompound(s; options=ViennaRNA.LibRNA.VRNA_OPTION_MFE)
+        @test length(fc) == 9
+        # use different energy parameter sets
+        fc = FoldCompound(s; params=:RNA_Turner1999)
+        @test length(fc) == 9
+        @test_throws ArgumentError FoldCompound(s; params=:UNKNOWN_ENERGY_PARAMS)
+        # use different temperatures to evaluate energies
+        fc = FoldCompound(s; temperature=55u"°C")
+        @test length(fc) == 9
+        fc = FoldCompound(s; temperature=310u"K")
+        @test length(fc) == 9
+        @test_throws Unitful.DimensionError FoldCompound(s; temperature=100u"m")
+        # circular
+        fc = FoldCompound(s; circular=true)
+        @test length(fc) == 9
+        @test fc.circular == true
+        # show
+        buf = IOBuffer()
+        show(buf, MIME("text/plain"), fc)
+        @test length(String(take!(buf))) > 0
+    end
     # multiple strands
     fc = FoldCompound("GGG&AAA&CCC")
     @test length(fc) == 9
     @test size(fc) == (3, 3, 3)
     @test nstrands(fc) == 3
-    # show
-    buf = IOBuffer()
-    show(buf, MIME("text/plain"), fc)
-    @test length(String(take!(buf))) > 0
+    fc = FoldCompound(["GGG&AAA&CCC", "G-G&AA-&CCA"])
+    @test length(fc) == 9
+    @test size(fc) == (3, 3, 3)
+    @test nstrands(fc) == 3
 end
 
 @testset "Pairtable" begin

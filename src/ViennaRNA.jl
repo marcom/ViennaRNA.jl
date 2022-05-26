@@ -43,22 +43,58 @@ const en_int_unit = 0.01u"kcal/mol"
 
 mutable struct FoldCompound
     ptr         :: Ptr{LibRNA.vrna_fc_s}
-    strands     :: Vector{String}
+    msa         :: Vector{String}
+    msa_strands :: Vector{Vector{SubString{String}}}
     params_name :: String
     temperature :: Quantity
     uniq_ML     :: Bool
     circular    :: Bool
-    function FoldCompound(seq::AbstractString,
+
+    function FoldCompound(msa::Vector{<:AbstractString},
                           model_details::Ptr{LibRNA.vrna_md_s},
                           options::Unsigned;
+                          params::Symbol,
                           params_name::String,
                           temperature::Quantity=37.0u"°C",
                           uniq_ML::Bool=false,
                           circular::Bool=false)
-        ptr = LibRNA.vrna_fold_compound(seq, model_details, options)
-        ptr != C_NULL || throw(ErrorException("pointer == C_NULL"))
-        strands = string.(split(seq, '&'))
-        fc = new(ptr, strands, params_name, temperature, uniq_ML, circular)
+        if length(msa) > 1
+            if !reduce(==, length.(msa))
+                error("all sequences in msa must have same length")
+            end
+            splits = findall.('&', msa)
+            if !reduce(==, splits)
+                error("strand split indicators '&' are in inconsistent columns in the msa")
+            end
+        end
+        msa_strands = split.(msa, '&')
+        if params == :RNA_Turner1999
+            err = LibRNA.vrna_params_load_RNA_Turner1999()
+        elseif params == :RNA_Turner2004
+            err = LibRNA.vrna_params_load_RNA_Turner2004()
+        elseif params == :RNA_Andronescu2007
+            err = LibRNA.vrna_params_load_RNA_Andronescu2007()
+        elseif params == :RNA_Langdon2018
+            err = LibRNA.vrna_params_load_RNA_Langdon2018()
+        else
+            throw(ArgumentError("unknown energy parameters: $(params)"))
+        end
+        if err == 0
+            throw(ErrorException("Failed to load energy parameters $params_name"))
+        end
+        temperature_nounit = ustrip(uconvert(u"°C", temperature))
+        LibRNA.vrna_md_defaults_temperature(temperature_nounit)
+        LibRNA.vrna_md_defaults_circ(Int(circular))
+        LibRNA.vrna_md_defaults_uniq_ML(Int(uniq_ML))
+
+        if length(msa) > 1
+            ptr = LibRNA.vrna_fold_compound_comparative(msa, model_details, options)
+        else
+            ptr = LibRNA.vrna_fold_compound(first(msa), model_details, options)
+        end
+        ptr != C_NULL || error("pointer == C_NULL")
+
+        fc = new(ptr, msa, msa_strands, params_name, temperature, uniq_ML, circular)
         finalizer(fc) do x
             # TODO: do we have to call vrna_mx_mfe_free or
             #       vrna_mx_pf_free here ourselves?
@@ -93,37 +129,29 @@ function FoldCompound(seq::AbstractString;
                       uniq_ML::Bool=false,
                       circular::Bool=false,
                       options::Unsigned=LibRNA.VRNA_OPTION_DEFAULT)
+    return FoldCompound([seq];
+                        params, temperature, uniq_ML, circular, options)
+end
+
+function FoldCompound(msa::Vector{<:AbstractString};
+                      params::Symbol=:RNA_Turner2004,
+                      temperature::Quantity=37.0u"°C",
+                      uniq_ML::Bool=false,
+                      circular::Bool=false,
+                      options::Unsigned=LibRNA.VRNA_OPTION_DEFAULT)
     # TODO: who frees md? hopefully vrna_fold_compound_free()
     #       otherwise possible memory leak
     params_name = String(params)
-    if params == :RNA_Turner1999
-        err = LibRNA.vrna_params_load_RNA_Turner1999()
-    elseif params == :RNA_Turner2004
-        err = LibRNA.vrna_params_load_RNA_Turner2004()
-    elseif params == :RNA_Andronescu2007
-        err = LibRNA.vrna_params_load_RNA_Andronescu2007()
-    elseif params == :RNA_Langdon2018
-        err = LibRNA.vrna_params_load_RNA_Langdon2018()
-    else
-        throw(ArgumentError("unknown energy parameters: $(params)"))
-    end
-    if err == 0
-        throw(ErrorException("Failed to load energy parameters $params_name"))
-    end
-    temperature_nounit = ustrip(uconvert(u"°C", temperature))
-    LibRNA.vrna_md_defaults_temperature(temperature_nounit)
-    LibRNA.vrna_md_defaults_circ(Int(circular))
-    LibRNA.vrna_md_defaults_uniq_ML(Int(uniq_ML))
     md = Ptr{LibRNA.vrna_md_s}(C_NULL)
-    return FoldCompound(seq, md, options;
-                        params_name, temperature, uniq_ML, circular)
+    return FoldCompound(msa, md, options;
+                        params, params_name, temperature, uniq_ML, circular)
 end
 
 Base.length(fc::FoldCompound) = sum(size(fc))
 
-Base.size(fc::FoldCompound) = ntuple(i -> length(fc.strands[i]), nstrands(fc))
+Base.size(fc::FoldCompound) = ntuple(i -> length(first(fc.msa_strands)[i]), nstrands(fc))
 
-nstrands(fc::FoldCompound) = length(fc.strands)
+nstrands(fc::FoldCompound) = length(first(fc.msa_strands))
 
 has_exp_matrices(fc::FoldCompound) = unsafe_load(fc.ptr).exp_matrices != C_NULL
 
@@ -131,12 +159,19 @@ function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     strand = "$(nstrands(fc)) strand" * (nstrands(fc) > 1 ? "s" : "")
     nt = "$(length(fc)) nt$(nstrands(fc) > 1 ? " total" : "")"
     circ = "$(fc.circular ? " (circular)" : "")"
-    println(io, "FoldCompound, $strand, $nt$circ")
+    println(io, "FoldCompound, $strand, $nt$circ$(length(fc.msa) > 1 ? " [comparative]" : "")")
     println(io, "  params      = $(fc.params_name)")
     println(io, "  temperature = $(fc.temperature)")
     println(io, "  uniq_ML     = $(fc.uniq_ML)")
-    for (i,s) in enumerate(fc.strands)
-        println(io,   "  strand $i    = $(s)")
+    if length(fc.msa) == 1
+        for (i,s) in enumerate(first(fc.msa_strands))
+            println(io,   "  strand $i    = $(s)")
+        end
+    else
+        println(io, "  MSA")
+        for (i,strands) in enumerate(fc.msa_strands)
+            println(io, "      ", join(strands, " & "))
+        end
     end
 end
 
