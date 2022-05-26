@@ -104,14 +104,18 @@ mutable struct FoldCompound
 end
 
 """
-    FoldCompound(seq; [params, temperature, uniq_ML, circular])
+    FoldCompound(seq::AbstractString; [params, temperature, uniq_ML, circular])
+    FoldCompound(msa::Vector{<:AbstractString}; [params, temperature, uniq_ML, circular])
 
 A `FoldCompound` encapsulates nucleotide sequences, energy
 parameters, and model details.
 
 Input arguments:
-- `seq`: nucleotide sequence(s) (multiple strands are separated by an
-  '&' character)
+- `seq`: nucleotide sequence, multiple strands are separated by an
+  '&' character
+- `msa`: multiple sequence alignment, for comparative folding
+   (alifold). A vector of sequences which may contain multiple
+   strands, denoted by '&', and gap '-' characters
 - `params`: energy parameter set, legal values are `:RNA_Turner1999`,
   `:RNA_Turner2004`, `:RNA_Andronescu2007`, `:RNA_Langdon2018`, with
   the default being `:RNA_Turner2004`
