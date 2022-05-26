@@ -49,7 +49,7 @@ Optional keyword arguments
 - `uniq_ML=true` (unique multiloop decomposition) is needed for some
   functions, e.g. `pbacktrack`. The default is `false`
 
-#### Multipl strands
+#### Multiple strands
 
 Mutiple strands can be given by separating them with an `&`, e.g.
 `FoldCompound("GGGG&CCCC")`
@@ -58,6 +58,8 @@ Mutiple strands can be given by separating them with an `&`, e.g.
 
 Pass multiple sequences to the FoldCompound constructor for comparative mode (alifold)
 `FoldCompound(["GG-GAAAACCCC", "GCCGAAA-CGGC"])`.
+
+It is currently not possible to have multiple strands in alifold mode.
 
 ### Minimum free energy structure (MFE)
 
