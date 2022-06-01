@@ -60,15 +60,12 @@ mutable struct FoldCompound
                           uniq_ML::Bool=false,
                           circular::Bool=false)
         if length(msa) > 1
-            if !reduce(==, length.(msa))
+            firstlen = length(first(msa))
+            if any(s -> length(s) != firstlen, msa)
                 error("all sequences in msa must have same length")
             end
-            splits = findall.('&', msa)
-            if ! all(x -> x == Int[], splits)
+            if any(s -> contains(s, '&'), msa)
                 error("multiple strands not supported in comparative mode (alifold)")
-            end
-            if !reduce(==, splits)
-                error("strand split indicators '&' are in inconsistent columns in the msa")
             end
         end
         msa_strands = split.(msa, '&')
