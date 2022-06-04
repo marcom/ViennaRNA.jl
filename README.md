@@ -125,7 +125,7 @@ Suboptimal structures with the method of Zuker
 subopt_zuker(fc)  # => Vector{Tuple{String, Quantity}}
 ```
 
-# Neighboring structures
+### Neighboring structures
 
 Move set to reach neighboring structures of a given structure
 
