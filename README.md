@@ -5,6 +5,19 @@ Unofficial Julia interface to the
 secondary structure prediction and analysis.  Please cite the original
 ViennaRNA publications if you use this library.
 
+## Installation
+
+```
+] add ViennaRNA
+```
+
+or
+
+```julia
+import Pkg
+Pkg.add("ViennaRNA")
+```
+
 ## Usage
 
 ```julia
