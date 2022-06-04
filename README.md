@@ -7,15 +7,11 @@ ViennaRNA publications if you use this library.
 
 ## Installation
 
-```
-] add ViennaRNA
-```
+Install ViennaRNA from the Julia package REPL, which can be accessed
+by pressing ] from the Julia REPL:
 
-or
-
-```julia
-import Pkg
-Pkg.add("ViennaRNA")
+```
+add ViennaRNA
 ```
 
 ## Usage
