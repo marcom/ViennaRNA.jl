@@ -2,6 +2,7 @@ module ViennaRNA
 
 import Base
 using Unitful: @u_str, Quantity, uconvert, ustrip
+using UnsafePointers: UnsafePtr
 
 # types
 export FoldCompound, Pairtable
@@ -43,12 +44,11 @@ const en_int_unit = 0.01u"kcal/mol"
 
 mutable struct FoldCompound
     ptr         :: Ptr{LibRNA.vrna_fc_s}
+    uptr        :: UnsafePtr{LibRNA.vrna_fc_s}
     msa         :: Vector{String}
     msa_strands :: Vector{Vector{SubString{String}}}
     params_name :: String
     temperature :: Quantity
-    uniq_ML     :: Bool
-    circular    :: Bool
 
     FoldCompound(seq::AbstractString; kwargs...) = FoldCompound([seq]; kwargs...)
     function FoldCompound(msa::Vector{<:AbstractString};
@@ -95,7 +95,7 @@ mutable struct FoldCompound
         end
         ptr != C_NULL || error("pointer == C_NULL")
 
-        fc = new(ptr, msa, msa_strands, params_name, temperature, uniq_ML, circular)
+        fc = new(ptr, UnsafePtr(ptr), msa, msa_strands, params_name, temperature)
         finalizer(fc) do x
             # TODO: do we have to call vrna_mx_mfe_free or
             #       vrna_mx_pf_free here ourselves?
@@ -159,17 +159,34 @@ nstrands(fc::FoldCompound) = length(first(fc.msa_strands))
 
 has_exp_matrices(fc::FoldCompound) = unsafe_load(fc.ptr).exp_matrices != C_NULL
 
+function Base.getproperty(fc::FoldCompound, sym::Symbol)
+    if sym == :circular
+        return Bool(fc.uptr.params[].model_details.circ[])
+    elseif sym == :dangles
+        return fc.uptr.params[].model_details.dangles[]
+    elseif sym == :uniq_ML
+        return Bool(fc.uptr.params[].model_details.uniq_ML[])
+    else
+        # fallback
+        getfield(fc, sym)
+    end
+end
+
+Base.propertynames(fc::FoldCompound) = (fieldnames(typeof(fc))...,
+                                        :circular, :dangles, :uniq_ML)
+
 function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     strand = "$(nstrands(fc)) strand" * (nstrands(fc) > 1 ? "s" : "")
     nt = "$(length(fc)) nt$(nstrands(fc) > 1 ? " total" : "")"
-    circ = "$(fc.circular ? " (circular)" : "")"
-    println(io, "FoldCompound, $strand, $nt$circ$(length(fc.msa) > 1 ? " [comparative]" : "")")
-    println(io, "  params      = $(fc.params_name)")
-    println(io, "  temperature = $(fc.temperature)")
-    println(io, "  uniq_ML     = $(fc.uniq_ML)")
+    circ = fc.circular ? " (circular)" : ""
+    comparative = length(fc.msa) > 1 ? " [comparative]" : ""
+    println(io, "FoldCompound, $strand, $nt$circ$comparative")
+    println(io, "  params      : $(fc.params_name)")
+    println(io, "  temperature : $(fc.temperature)")
+    println(io, "  options     : circular=$(fc.circular), dangles=$(fc.dangles), uniq_ML=$(fc.uniq_ML)")
     if length(fc.msa) == 1
         for (i,s) in enumerate(first(fc.msa_strands))
-            println(io,   "  strand $i    = $(s)")
+            println(io,   "  strand $i    : $(s)")
         end
     else
         println(io, "  MSA")

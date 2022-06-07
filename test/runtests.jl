@@ -10,10 +10,12 @@ using Unitful
         fc = FoldCompound(s; uniq_ML=true)
         @test length(fc) == 9
         @test sum(size(fc)) == length(fc)
-        # TODO
-        # @test fc.ptr.params.model_details.uniq_ML[] == 1
+        @test fc.circular == false
+        @test fc.dangles == 2
+        @test fc.uniq_ML == true
         fc = FoldCompound(s; options=ViennaRNA.LibRNA.VRNA_OPTION_MFE)
         @test length(fc) == 9
+        @test fc.uniq_ML == false
         # use different energy parameter sets
         fc = FoldCompound(s; params=:RNA_Turner1999)
         @test length(fc) == 9
