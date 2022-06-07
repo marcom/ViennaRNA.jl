@@ -12,6 +12,7 @@ using Unitful
         @test sum(size(fc)) == length(fc)
         @test fc.circular == false
         @test fc.dangles == 2
+        @test fc.min_loop_size == 3
         @test fc.uniq_ML == true
         fc = FoldCompound(s; options=ViennaRNA.LibRNA.VRNA_OPTION_MFE)
         @test length(fc) == 9
@@ -34,6 +35,13 @@ using Unitful
         fc = FoldCompound(s; dangles=1)
         @test length(fc) == 9
         @test fc.dangles == 1
+        @test_throws ArgumentError FoldCompound(s; dangles=-1)
+        @test_throws ArgumentError FoldCompound(s; dangles=4)
+        # min_loop_size
+        fc = FoldCompound(s; min_loop_size=2)
+        @test length(fc) == 9
+        @test fc.dangles == 2
+        @test_throws ArgumentError FoldCompound(s; min_loop_size=-1)
         # show
         buf = IOBuffer()
         show(buf, MIME("text/plain"), fc)
@@ -50,8 +58,8 @@ using Unitful
     # @test size(fc) == (3, 3, 3)
     # @test fc.nstrands == 3
 
-    @test_throws ErrorException FoldCompound(["GGGA", "GCGG", "G"])
-    @test_throws ErrorException FoldCompound(["GG&C", "AA&U"])
+    @test_throws ArgumentError FoldCompound(["GGGA", "GCGG", "G"])
+    @test_throws ArgumentError FoldCompound(["GG&C", "AA&U"])
 end
 
 @testset "Pairtable" begin

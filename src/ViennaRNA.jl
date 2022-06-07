@@ -81,19 +81,24 @@ mutable struct FoldCompound
                           params::Symbol=:RNA_Turner2004,
                           params_name::String = String(params),
                           temperature::Quantity=37.0u"°C",
+                          # model_details options
                           circular::Bool=false,
                           dangles::Int=2,
+                          min_loop_size::Int=3,
                           uniq_ML::Bool=false)
         if dangles < 0 || dangles > 3
             throw(ArgumentError("dangles must be 0, 1, 2, or 3"))
         end
+        if min_loop_size < 0
+            throw(ArgumentError("min_loop_size must be >= 0"))
+        end
         if length(msa) > 1
             firstlen = length(first(msa))
             if any(s -> length(s) != firstlen, msa)
-                error("all sequences in msa must have same length")
+                throw(ArgumentError("all sequences in msa must have same length"))
             end
             if any(s -> contains(s, '&'), msa)
-                error("multiple strands not supported in comparative mode (alifold)")
+                throw(ArgumentError("multiple strands not supported in comparative mode (alifold)"))
             end
         end
         msa_strands = split.(msa, '&')
@@ -109,12 +114,13 @@ mutable struct FoldCompound
             throw(ArgumentError("unknown energy parameters: $(params)"))
         end
         if err == 0
-            throw(ErrorException("Failed to load energy parameters $params_name"))
+            error("Failed to load energy parameters $params_name")
         end
         temperature_nounit = ustrip(uconvert(u"°C", temperature))
         LibRNA.vrna_md_defaults_temperature(temperature_nounit)
         LibRNA.vrna_md_defaults_circ(Int(circular))
         LibRNA.vrna_md_defaults_dangles(dangles)
+        LibRNA.vrna_md_defaults_min_loop_size(min_loop_size)
         LibRNA.vrna_md_defaults_uniq_ML(Int(uniq_ML))
 
         ptr = if length(msa) == 1
@@ -122,7 +128,7 @@ mutable struct FoldCompound
         else
             LibRNA.vrna_fold_compound_comparative(msa, model_details, options)
         end
-        ptr != C_NULL || error("pointer == C_NULL")
+        ptr != C_NULL || error("vrna_fold_compound returned pointer == C_NULL")
 
         fc = new(ptr, UnsafePtr(ptr), msa, msa_strands, params_name, temperature)
         finalizer(fc) do x
@@ -144,6 +150,8 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         return fc.uptr.params[].model_details.dangles[]
     elseif sym == :has_exp_matrices
         fc.uptr.exp_matrices[] != C_NULL
+    elseif sym == :min_loop_size
+        return fc.uptr.params[].model_details.min_loop_size[]
     elseif sym == :nstrands
         return length(first(fc.msa_strands))
     elseif sym == :uniq_ML
@@ -154,8 +162,10 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
     end
 end
 
-Base.propertynames(fc::FoldCompound) = (fieldnames(typeof(fc))...,
-                                        :circular, :dangles, :uniq_ML)
+Base.propertynames(fc::FoldCompound) =
+    (fieldnames(typeof(fc))...,
+     :circular, :dangles, :has_exp_matrices, :min_loop_size, :nstrands,
+     :uniq_ML)
 
 function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     strand = "$(fc.nstrands) strand" * (fc.nstrands > 1 ? "s" : "")
@@ -165,7 +175,7 @@ function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     println(io, "FoldCompound, $strand, $nt$circ$comparative")
     println(io, "  params      : $(fc.params_name)")
     println(io, "  temperature : $(fc.temperature)")
-    println(io, "  options     : circular=$(fc.circular), dangles=$(fc.dangles), uniq_ML=$(fc.uniq_ML)")
+    println(io, "  options     : circular=$(fc.circular), dangles=$(fc.dangles), min_loop_size=$(fc.min_loop_size), uniq_ML=$(fc.uniq_ML)")
     if length(fc.msa) == 1
         for (i,s) in enumerate(first(fc.msa_strands))
             println(io,   "  strand $i    : $(s)")
