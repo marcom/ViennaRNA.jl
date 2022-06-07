@@ -39,8 +39,10 @@ end
 end
 import .LibRNA_Helper
 
+# TODO: rename en_unit to unit_energy, en_int_unit to unit_energy_int
 const en_unit = 1.0u"kcal/mol"
 const en_int_unit = 0.01u"kcal/mol"
+const unit_temperature = u"°C"
 
 """
     FoldCompound(seq::AbstractString; [params, temperature, uniq_ML, circular])
@@ -72,7 +74,6 @@ mutable struct FoldCompound
     msa         :: Vector{String}
     msa_strands :: Vector{Vector{SubString{String}}}
     params_name :: String
-    temperature :: Quantity
 
     FoldCompound(seq::AbstractString; kwargs...) = FoldCompound([seq]; kwargs...)
     function FoldCompound(msa::Vector{<:AbstractString};
@@ -130,7 +131,7 @@ mutable struct FoldCompound
         end
         ptr != C_NULL || error("vrna_fold_compound returned pointer == C_NULL")
 
-        fc = new(ptr, UnsafePtr(ptr), msa, msa_strands, params_name, temperature)
+        fc = new(ptr, UnsafePtr(ptr), msa, msa_strands, params_name)
         finalizer(fc) do x
             # TODO: do we have to call vrna_mx_mfe_free or
             #       vrna_mx_pf_free here ourselves?
@@ -154,6 +155,8 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         return fc.uptr.params[].model_details.min_loop_size[]
     elseif sym == :nstrands
         return length(first(fc.msa_strands))
+    elseif sym == :temperature
+        return fc.uptr.params[].model_details.temperature[] * unit_temperature
     elseif sym == :uniq_ML
         return Bool(fc.uptr.params[].model_details.uniq_ML[])
     else
@@ -165,7 +168,7 @@ end
 Base.propertynames(fc::FoldCompound) =
     (fieldnames(typeof(fc))...,
      :circular, :dangles, :has_exp_matrices, :min_loop_size, :nstrands,
-     :uniq_ML)
+     :temperature, :uniq_ML)
 
 function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     strand = "$(fc.nstrands) strand" * (fc.nstrands > 1 ? "s" : "")

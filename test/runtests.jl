@@ -24,8 +24,10 @@ using Unitful
         # use different temperatures to evaluate energies
         fc = FoldCompound(s; temperature=55u"°C")
         @test length(fc) == 9
+        @test fc.temperature == 55u"°C"
         fc = FoldCompound(s; temperature=310u"K")
         @test length(fc) == 9
+        @test fc.temperature == 310u"K"
         @test_throws Unitful.DimensionError FoldCompound(s; temperature=100u"m")
         # circular
         fc = FoldCompound(s; circular=true)
