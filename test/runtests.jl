@@ -30,6 +30,10 @@ using Unitful
         fc = FoldCompound(s; circular=true)
         @test length(fc) == 9
         @test fc.circular == true
+        # dangles
+        fc = FoldCompound(s; dangles=1)
+        @test length(fc) == 9
+        @test fc.dangles == 1
         # show
         buf = IOBuffer()
         show(buf, MIME("text/plain"), fc)
