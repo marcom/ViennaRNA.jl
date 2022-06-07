@@ -72,7 +72,7 @@ Model details:
 - `min_loop_length`: the minimum size of a loop (without the closing
    base pair). Default is `3`.
 - `uniq_ML`: use unique decomposition for multiloops, needed for
-  `pbacktrack` and `subopt`
+  `pbacktrack` and `subopt`. Default is `false`.
 """
 mutable struct FoldCompound
     ptr         :: Ptr{LibRNA.vrna_fc_s}
@@ -87,10 +87,11 @@ mutable struct FoldCompound
                           params::Symbol=:RNA_Turner2004,
                           temperature::Quantity=37.0u"°C",
                           # model_details options
-                          circular::Bool=false,
-                          dangles::Int=2,
-                          min_loop_size::Int=3,
-                          uniq_ML::Bool=false)
+                          circular::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_CIRC),
+                          dangles::Int=Int(LibRNA.VRNA_MODEL_DEFAULT_DANGLES),
+                          gquadruplex::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_GQUAD),
+                          min_loop_size::Int=Int(LibRNA.TURN),
+                          uniq_ML::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_UNIQ_ML))
         if dangles < 0 || dangles > 3
             throw(ArgumentError("dangles must be 0, 1, 2, or 3"))
         end
@@ -125,6 +126,7 @@ mutable struct FoldCompound
         LibRNA.vrna_md_defaults_temperature(temperature_nounit)
         LibRNA.vrna_md_defaults_circ(Int(circular))
         LibRNA.vrna_md_defaults_dangles(dangles)
+        LibRNA.vrna_md_defaults_gquad(Int(gquadruplex))
         LibRNA.vrna_md_defaults_min_loop_size(min_loop_size)
         LibRNA.vrna_md_defaults_uniq_ML(Int(uniq_ML))
 
@@ -153,6 +155,8 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         return Bool(fc.uptr.params[].model_details.circ[])
     elseif sym == :dangles
         return fc.uptr.params[].model_details.dangles[]
+    elseif sym == :gquadruplex
+        return Bool(fc.uptr.params[].model_details.gquad[])
     elseif sym == :has_exp_matrices
         fc.uptr.exp_matrices[] != C_NULL
     elseif sym == :min_loop_size
@@ -178,8 +182,8 @@ end
 
 Base.propertynames(fc::FoldCompound) =
     (fieldnames(typeof(fc))...,
-     :circular, :dangles, :has_exp_matrices, :min_loop_size, :nstrands,
-     :params_name, :temperature, :uniq_ML)
+     :circular, :dangles, :gquadruplex, :has_exp_matrices, :min_loop_size,
+     :nstrands, :params_name, :temperature, :uniq_ML)
 
 function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     strand = "$(fc.nstrands) strand" * (fc.nstrands > 1 ? "s" : "")
@@ -189,7 +193,8 @@ function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     println(io, "FoldCompound, $strand, $nt$circ$comparative")
     println(io, "  params      : $(fc.params_name)")
     println(io, "  temperature : $(fc.temperature)")
-    println(io, "  options     : circular=$(fc.circular), dangles=$(fc.dangles), min_loop_size=$(fc.min_loop_size), uniq_ML=$(fc.uniq_ML)")
+    print(io,   "  options     : circular=$(fc.circular), dangles=$(fc.dangles), gquadruplex=$(fc.gquadruplex),")
+    println(io,                " min_loop_size=$(fc.min_loop_size), uniq_ML=$(fc.uniq_ML)")
     if length(fc.msa) == 1
         for (i,s) in enumerate(first(fc.msa_strands))
             println(io,   "  strand $i    : $(s)")

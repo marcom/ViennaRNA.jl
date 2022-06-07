@@ -13,6 +13,7 @@ using Unitful
         # test FoldCompound properties
         @test fc.circular == false
         @test fc.dangles == 2
+        @test fc.gquadruplex == false
         @test fc.has_exp_matrices == false
         @test fc.min_loop_size == 3
         @test fc.nstrands == 1
@@ -44,6 +45,10 @@ using Unitful
         @test fc.dangles == 1
         @test_throws ArgumentError FoldCompound(s; dangles=-1)
         @test_throws ArgumentError FoldCompound(s; dangles=4)
+        # gquadruplex
+        fc = FoldCompound(s; gquadruplex=true)
+        @test length(fc) == 9
+        @test fc.gquadruplex == true
         # min_loop_size
         fc = FoldCompound(s; min_loop_size=2)
         @test length(fc) == 9
