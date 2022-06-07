@@ -45,8 +45,8 @@ const en_int_unit = 0.01u"kcal/mol"
 const unit_temperature = u"°C"
 
 """
-    FoldCompound(seq::AbstractString; [params, temperature, uniq_ML, circular])
-    FoldCompound(msa::Vector{<:AbstractString}; [params, temperature, uniq_ML, circular])
+    FoldCompound(seq::AbstractString; [params, temperature, circular, dangles, min_loop_size, uniq_ML])
+    FoldCompound(msa::Vector{<:AbstractString}; [params, temperature, circular, dangles, min_loop_size, uniq_ML])
 
 A `FoldCompound` encapsulates nucleotide sequences, energy
 parameters, and model details.
@@ -58,29 +58,33 @@ Input arguments:
    (alifold). A vector of sequences which may contain multiple
    strands, denoted by '&', and gap '-' characters
 - `params`: energy parameter set, legal values are `:RNA_Turner1999`,
-  `:RNA_Turner2004`, `:RNA_Andronescu2007`, `:RNA_Langdon2018`, with
-  the default being `:RNA_Turner2004`
-- `temperature`: the temperature at which calculations are performed,
-  the default is `37u"°C"`
+  `:RNA_Turner2004`, `:RNA_Andronescu2007`, `:RNA_Langdon2018`.
+  Default is `:RNA_Turner2004`.
+- `temperature`: the temperature at which calculations are performed.
+  Default is `37u"°C"`.
+
+Model details:
+- `circular`: determines if the RNA strand is circular, i.e. the
+  5'-end and 3'-end are covalently bonded. Default is `false`.
+- `dangles`: how to treat dangling base pairs in multiloops and the
+  exterior loop. Can be 0, 1, 2, or 3. See ViennaRNA docs for
+  details. Default is `2`.
+- `min_loop_length`: the minimum size of a loop (without the closing
+   base pair). Default is `3`.
 - `uniq_ML`: use unique decomposition for multiloops, needed for
   `pbacktrack` and `subopt`
-- `circular`: determines if the RNA strand is circular, i.e. the
-  5'-end and 3'-end are covalently bonded, with the default being
-  false
 """
 mutable struct FoldCompound
     ptr         :: Ptr{LibRNA.vrna_fc_s}
     uptr        :: UnsafePtr{LibRNA.vrna_fc_s}
     msa         :: Vector{String}
     msa_strands :: Vector{Vector{SubString{String}}}
-    params_name :: String
 
     FoldCompound(seq::AbstractString; kwargs...) = FoldCompound([seq]; kwargs...)
     function FoldCompound(msa::Vector{<:AbstractString};
                           model_details::Ptr{LibRNA.vrna_md_s}=Ptr{LibRNA.vrna_md_s}(C_NULL),
                           options::Unsigned=LibRNA.VRNA_OPTION_DEFAULT,
                           params::Symbol=:RNA_Turner2004,
-                          params_name::String = String(params),
                           temperature::Quantity=37.0u"°C",
                           # model_details options
                           circular::Bool=false,
@@ -131,7 +135,7 @@ mutable struct FoldCompound
         end
         ptr != C_NULL || error("vrna_fold_compound returned pointer == C_NULL")
 
-        fc = new(ptr, UnsafePtr(ptr), msa, msa_strands, params_name)
+        fc = new(ptr, UnsafePtr(ptr), msa, msa_strands)
         finalizer(fc) do x
             # TODO: do we have to call vrna_mx_mfe_free or
             #       vrna_mx_pf_free here ourselves?
@@ -155,8 +159,15 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         return fc.uptr.params[].model_details.min_loop_size[]
     elseif sym == :nstrands
         return length(first(fc.msa_strands))
+    elseif sym == :params_name
+        return unsafe_string(reinterpret(Ptr{UInt8}, pointer(fc.uptr.params[].param_file)))
     elseif sym == :temperature
-        return fc.uptr.params[].model_details.temperature[] * unit_temperature
+        par_temperature = fc.uptr.params[].temperature[]
+        md_temperature = fc.uptr.params[].model_details.temperature[]
+        if par_temperature != md_temperature
+            error("params temperature and model_details temperature don't agree")
+        end
+        return par_temperature * unit_temperature
     elseif sym == :uniq_ML
         return Bool(fc.uptr.params[].model_details.uniq_ML[])
     else
@@ -168,7 +179,7 @@ end
 Base.propertynames(fc::FoldCompound) =
     (fieldnames(typeof(fc))...,
      :circular, :dangles, :has_exp_matrices, :min_loop_size, :nstrands,
-     :temperature, :uniq_ML)
+     :params_name, :temperature, :uniq_ML)
 
 function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     strand = "$(fc.nstrands) strand" * (fc.nstrands > 1 ? "s" : "")

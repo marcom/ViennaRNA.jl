@@ -10,9 +10,14 @@ using Unitful
         fc = FoldCompound(s; uniq_ML=true)
         @test length(fc) == 9
         @test sum(size(fc)) == length(fc)
+        # test FoldCompound properties
         @test fc.circular == false
         @test fc.dangles == 2
+        @test fc.has_exp_matrices == false
         @test fc.min_loop_size == 3
+        @test fc.nstrands == 1
+        @test fc.params_name == "RNA - Turner 2004"
+        @test fc.temperature == 37u"°C"
         @test fc.uniq_ML == true
         fc = FoldCompound(s; options=ViennaRNA.LibRNA.VRNA_OPTION_MFE)
         @test length(fc) == 9
