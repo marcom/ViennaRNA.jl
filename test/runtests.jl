@@ -39,12 +39,12 @@ using Unitful
     fc = FoldCompound("GGG&AAA&CCC")
     @test length(fc) == 9
     @test size(fc) == (3, 3, 3)
-    @test nstrands(fc) == 3
+    @test fc.nstrands == 3
     # multistrand alifold (not supported yet)
     # fc = FoldCompound(["GGG&AAA&CCC", "G-G&AA-&CCA"])
     # @test length(fc) == 9
     # @test size(fc) == (3, 3, 3)
-    # @test nstrands(fc) == 3
+    # @test fc.nstrands == 3
 
     @test_throws ErrorException FoldCompound(["GGGA", "GCGG", "G"])
     @test_throws ErrorException FoldCompound(["GG&C", "AA&U"])

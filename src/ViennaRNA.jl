@@ -12,7 +12,7 @@ export bp_distance, bpp, centroid, energy, ensemble_defect,
     mean_bp_distance, mfe, neighbors, partfn, pbacktrack, plot_coords,
     prob_of_structure, subopt, subopt_zuker, tree_edit_dist
 # additional utility functions
-export basepairs, nstrands, plot_structure, prob_of_basepairs
+export basepairs, plot_structure, prob_of_basepairs
 
 include("../lib/LibRNA.jl")
 import .LibRNA
@@ -153,17 +153,17 @@ end
 
 Base.length(fc::FoldCompound) = sum(size(fc))
 
-Base.size(fc::FoldCompound) = ntuple(i -> length(first(fc.msa_strands)[i]), nstrands(fc))
-
-nstrands(fc::FoldCompound) = length(first(fc.msa_strands))
-
-has_exp_matrices(fc::FoldCompound) = unsafe_load(fc.ptr).exp_matrices != C_NULL
+Base.size(fc::FoldCompound) = ntuple(i -> length(first(fc.msa_strands)[i]), fc.nstrands)
 
 function Base.getproperty(fc::FoldCompound, sym::Symbol)
     if sym == :circular
         return Bool(fc.uptr.params[].model_details.circ[])
     elseif sym == :dangles
         return fc.uptr.params[].model_details.dangles[]
+    elseif sym == :has_exp_matrices
+        fc.uptr.exp_matrices[] != C_NULL
+    elseif sym == :nstrands
+        return length(first(fc.msa_strands))
     elseif sym == :uniq_ML
         return Bool(fc.uptr.params[].model_details.uniq_ML[])
     else
@@ -176,8 +176,8 @@ Base.propertynames(fc::FoldCompound) = (fieldnames(typeof(fc))...,
                                         :circular, :dangles, :uniq_ML)
 
 function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
-    strand = "$(nstrands(fc)) strand" * (nstrands(fc) > 1 ? "s" : "")
-    nt = "$(length(fc)) nt$(nstrands(fc) > 1 ? " total" : "")"
+    strand = "$(fc.nstrands) strand" * (fc.nstrands > 1 ? "s" : "")
+    nt = "$(length(fc)) nt$(fc.nstrands > 1 ? " total" : "")"
     circ = fc.circular ? " (circular)" : ""
     comparative = length(fc.msa) > 1 ? " [comparative]" : ""
     println(io, "FoldCompound, $strand, $nt$circ$comparative")
@@ -311,7 +311,7 @@ Base-pair distance of all possible pairs of secondary structures
 weighted by their Boltzmann probabilities.
 """
 function mean_bp_distance(fc::FoldCompound)
-    has_exp_matrices(fc) ||
+    fc.has_exp_matrices ||
         throw(ArgumentError("partfn(fc::FoldCompound) must be run first"))
     return LibRNA.vrna_mean_bp_distance(fc.ptr)
 end
@@ -336,7 +336,7 @@ Ensemble defect between a sequence given as a `FoldCompound` or
 given as a `Pairtable` or as an `AbstractString`.
 """
 function ensemble_defect(fc::FoldCompound, pt::Pairtable)
-    has_exp_matrices(fc) ||
+    fc.has_exp_matrices ||
         throw(ArgumentError("partfn(::FoldCompound) must be run first"))
     length(fc) == length(pt) ||
         throw(ArgumentError("FoldCompound and Pairtable must have equal length"))
@@ -367,7 +367,7 @@ end
 Boltzmann probability of a structure for a sequence.
 """
 function prob_of_structure(fc::FoldCompound, structure::AbstractString)
-    has_exp_matrices(fc) ||
+    fc.has_exp_matrices ||
         throw(ArgumentError("must first call ViennaRNA.partfn(::FoldCompound)"))
     length(fc) == length(structure) ||
         throw(ArgumentError("FoldCompound and structure must have equal length"))
@@ -468,7 +468,7 @@ Calculate the matrix of base-pair probabilities.
 """
 function bpp(fc::FoldCompound)
     # TODO: return upper triangular matrix type
-    has_exp_matrices(fc) ||
+    fc.has_exp_matrices ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
     n = length(fc)
     p = zeros(n,n)
@@ -502,7 +502,7 @@ probabilities.
 function pbacktrack(fc::FoldCompound;
                     num_samples::Integer=1,
                     options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
-    has_exp_matrices(fc) ||
+    fc.has_exp_matrices ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
     fc.uniq_ML ||
         throw(ArgumentError("must have fc.uniq_ML == true"))
@@ -534,7 +534,7 @@ end
 Maximum expected accuracy (MEA) structure.
 """
 function mea(fc::FoldCompound; gamma=1.0)
-    has_exp_matrices(fc) ||
+    fc.has_exp_matrices ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
     ptr_mea   = Ptr{Cfloat}(LibRNA.vrna_alloc(sizeof(Cfloat)))
     ptr_str   = LibRNA.vrna_MEA(fc.ptr, gamma, ptr_mea)
@@ -562,7 +562,7 @@ smallest Boltzmann probability weighted base-pair distance to all
 other structures.
 """
 function centroid(fc::FoldCompound)
-    has_exp_matrices(fc) ||
+    fc.has_exp_matrices ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
     ptr_dist = Ptr{Cdouble}(LibRNA.vrna_alloc(sizeof(Cdouble)))
     ptr_str = LibRNA.vrna_centroid(fc.ptr, ptr_dist)
