@@ -218,8 +218,10 @@ end
 
 Base.propertynames(fc::FoldCompound) =
     (fieldnames(typeof(fc))...,
-     :circular, :dangles, :gquadruplex, :has_exp_matrices, :min_loop_size,
-     :nstrands, :params_name, :temperature, :uniq_ML)
+     :circular, :dangles, :gquadruplex, :has_exp_matrices, :log_ML,
+     :min_loop_size, :no_GU_basepairs, :no_GU_closure,
+     :no_lonely_pairs, :nstrands, :params_name, :special_hairpins,
+     :temperature, :uniq_ML)
 
 function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     strand = "$(fc.nstrands) strand" * (fc.nstrands > 1 ? "s" : "")
