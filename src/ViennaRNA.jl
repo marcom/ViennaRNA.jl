@@ -44,9 +44,11 @@ const en_unit = 1.0u"kcal/mol"
 const en_int_unit = 0.01u"kcal/mol"
 const unit_temperature = u"°C"
 
+# TODO: use $(LibRNA.VRNA_MODEL_DEFAULT_GQUAD) string interpolation
+# here instead of hardcoding defaults
 """
-    FoldCompound(seq::AbstractString; [params, temperature, circular, dangles, min_loop_size, uniq_ML])
-    FoldCompound(msa::Vector{<:AbstractString}; [params, temperature, circular, dangles, min_loop_size, uniq_ML])
+    FoldCompound(seq::AbstractString; [params, temperature], [model_details...])
+    FoldCompound(msa::Vector{<:AbstractString}; [params, temperature], [model_details...])
 
 A `FoldCompound` encapsulates nucleotide sequences, energy
 parameters, and model details.
@@ -63,14 +65,23 @@ Input arguments:
 - `temperature`: the temperature at which calculations are performed.
   Default is `37u"°C"`.
 
-Model details:
+Model details (additional keyword arguments):
 - `circular`: determines if the RNA strand is circular, i.e. the
   5'-end and 3'-end are covalently bonded. Default is `false`.
 - `dangles`: how to treat dangling base pairs in multiloops and the
   exterior loop. Can be 0, 1, 2, or 3. See ViennaRNA docs for
   details. Default is `2`.
+- `gquadruplex`: allow G-quadruplexes in predictions. Default is
+  `false`.
+- `log_ML`: use logarithmic energy model for multiloops. Default is
+  `false`.
 - `min_loop_length`: the minimum size of a loop (without the closing
    base pair). Default is `3`.
+- `no_GU_basepairs`: disallow G-U basepairs. Default is `false`.
+- `no_GU_closure`: disallow G-U basepairs as closing pairs for
+  loops. Default is `false`.
+- `special_hairpins`: use special hairpin energies for certain tri-,
+  tetra- and hexloops. Default is `true`.
 - `uniq_ML`: use unique decomposition for multiloops, needed for
   `pbacktrack` and `subopt`. Default is `false`.
 """
@@ -90,7 +101,11 @@ mutable struct FoldCompound
                           circular::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_CIRC),
                           dangles::Int=Int(LibRNA.VRNA_MODEL_DEFAULT_DANGLES),
                           gquadruplex::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_GQUAD),
+                          log_ML::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_LOG_ML),
                           min_loop_size::Int=Int(LibRNA.TURN),
+                          no_GU_basepairs::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_NO_GU),
+                          no_GU_closure::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_NO_GU_CLOSURE),
+                          special_hairpins::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_SPECIAL_HP),
                           uniq_ML::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_UNIQ_ML))
         if dangles < 0 || dangles > 3
             throw(ArgumentError("dangles must be 0, 1, 2, or 3"))
@@ -127,7 +142,11 @@ mutable struct FoldCompound
         LibRNA.vrna_md_defaults_circ(Int(circular))
         LibRNA.vrna_md_defaults_dangles(dangles)
         LibRNA.vrna_md_defaults_gquad(Int(gquadruplex))
+        LibRNA.vrna_md_defaults_logML(Int(log_ML))
         LibRNA.vrna_md_defaults_min_loop_size(min_loop_size)
+        LibRNA.vrna_md_defaults_noGU(Int(no_GU_basepairs))
+        LibRNA.vrna_md_defaults_noGUclosure(Int(no_GU_closure))
+        LibRNA.vrna_md_defaults_special_hp(Int(special_hairpins))
         LibRNA.vrna_md_defaults_uniq_ML(Int(uniq_ML))
 
         ptr = if length(msa) == 1
@@ -138,6 +157,9 @@ mutable struct FoldCompound
         ptr != C_NULL || error("vrna_fold_compound returned pointer == C_NULL")
 
         fc = new(ptr, UnsafePtr(ptr), msa, msa_strands)
+        if fc.min_loop_size != min_loop_size
+            @warn "min_loop_size was specified as $min_loop_size, but got set to $(fc.min_loop_size) by ViennaRNA"
+        end
         finalizer(fc) do x
             # TODO: do we have to call vrna_mx_mfe_free or
             #       vrna_mx_pf_free here ourselves?
@@ -155,17 +177,25 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
     if sym == :circular
         return Bool(fc.uptr.params[].model_details.circ[])
     elseif sym == :dangles
-        return fc.uptr.params[].model_details.dangles[]
+        return Int(fc.uptr.params[].model_details.dangles[])
     elseif sym == :gquadruplex
         return Bool(fc.uptr.params[].model_details.gquad[])
     elseif sym == :has_exp_matrices
         fc.uptr.exp_matrices[] != C_NULL
+    elseif sym == :log_ML
+        return Bool(fc.uptr.params[].model_details.logML[])
     elseif sym == :min_loop_size
         return fc.uptr.params[].model_details.min_loop_size[]
+    elseif sym == :no_GU_basepairs
+        return Bool(fc.uptr.params[].model_details.noGU[])
+    elseif sym == :no_GU_closure
+        return Bool(fc.uptr.params[].model_details.noGUclosure[])
     elseif sym == :nstrands
         return Int(fc.uptr.strands[])
     elseif sym == :params_name
         return unsafe_string(reinterpret(Ptr{UInt8}, pointer(fc.uptr.params[].param_file)))
+    elseif sym == :special_hairpins
+        return Bool(fc.uptr.params[].model_details.special_hp[])
     elseif sym == :temperature
         par_temperature = fc.uptr.params[].temperature[]
         md_temperature = fc.uptr.params[].model_details.temperature[]
@@ -194,8 +224,9 @@ function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     println(io, "FoldCompound, $strand, $nt$circ$comparative")
     println(io, "  params      : $(fc.params_name)")
     println(io, "  temperature : $(fc.temperature)")
-    print(io,   "  options     : circular=$(fc.circular), dangles=$(fc.dangles), gquadruplex=$(fc.gquadruplex),")
-    println(io,                " min_loop_size=$(fc.min_loop_size), uniq_ML=$(fc.uniq_ML)")
+    println(io, "  options     : circular=$(fc.circular), dangles=$(fc.dangles), gquadruplex=$(fc.gquadruplex), log_ML=$(fc.log_ML),")
+    println(io, "                min_loop_size=$(fc.min_loop_size), no_GU_basepairs=$(fc.no_GU_basepairs), no_GU_closure=$(fc.no_GU_closure),")
+    println(io, "                special_hairpins=$(fc.special_hairpins), uniq_ML=$(fc.uniq_ML)")
     if length(fc.msa) == 1
         for (i,s) in enumerate(first(fc.msa_strands))
             println(io,   "  strand $i    : $(s)")

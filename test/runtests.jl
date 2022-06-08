@@ -6,23 +6,29 @@ using Unitful
     for s in ["GGGAAACCC",
               ["GGG-A-CC-", "G-GGC-G-G"],
               ["GGG-A-CC-", "G-GGC-G-G", "CGC----CG"]]
-        @test length(FoldCompound(s)) == 9
-        fc = FoldCompound(s; uniq_ML=true)
+        fc = FoldCompound(s)
         @test length(fc) == 9
         @test sum(size(fc)) == length(fc)
+
         # test FoldCompound properties
+        # TODO: take default values from LibRNA.VRNA_MODEL_DEFAULT_GQUAD etc
         @test fc.circular == false
         @test fc.dangles == 2
         @test fc.gquadruplex == false
         @test fc.has_exp_matrices == false
+        @test fc.log_ML == false
         @test fc.min_loop_size == 3
+        @test fc.no_GU_basepairs == false
+        @test fc.no_GU_closure == false
         @test fc.nstrands == 1
         @test fc.params_name == "RNA - Turner 2004"
+        @test fc.special_hairpins == true
         @test fc.temperature == 37u"°C"
-        @test fc.uniq_ML == true
+        @test fc.uniq_ML == false
+
+        # options
         fc = FoldCompound(s; options=ViennaRNA.LibRNA.VRNA_OPTION_MFE)
         @test length(fc) == 9
-        @test fc.uniq_ML == false
         # use different energy parameter sets
         fc = FoldCompound(s; params=:RNA_Turner1999)
         @test length(fc) == 9
@@ -35,6 +41,7 @@ using Unitful
         @test length(fc) == 9
         @test fc.temperature == 310u"K"
         @test_throws Unitful.DimensionError FoldCompound(s; temperature=100u"m")
+
         # circular
         fc = FoldCompound(s; circular=true)
         @test length(fc) == 9
@@ -49,16 +56,37 @@ using Unitful
         fc = FoldCompound(s; gquadruplex=true)
         @test length(fc) == 9
         @test fc.gquadruplex == true
+        # log_ML
+        fc = FoldCompound(s; log_ML=true)
+        @test length(fc) == 9
+        @test fc.log_ML == true
         # min_loop_size
         fc = FoldCompound(s; min_loop_size=2)
         @test length(fc) == 9
         @test fc.dangles == 2
         @test_throws ArgumentError FoldCompound(s; min_loop_size=-1)
+        # no_GU_basepairs
+        fc = FoldCompound(s; no_GU_basepairs=true)
+        @test length(fc) == 9
+        @test fc.no_GU_basepairs == true
+        # no_GU_closure
+        fc = FoldCompound(s; no_GU_closure=true)
+        @test length(fc) == 9
+        @test fc.no_GU_closure == true
+        # special_hairpins
+        fc = FoldCompound(s; special_hairpins=false)
+        @test length(fc) == 9
+        @test fc.special_hairpins == false
+        # uniq_ML
+        fc = FoldCompound(s; uniq_ML=true)
+        @test length(fc) == 9
+        @test fc.uniq_ML == true
         # show
         buf = IOBuffer()
         show(buf, MIME("text/plain"), fc)
         @test length(String(take!(buf))) > 0
     end
+
     # multiple strands
     fc = FoldCompound("GGG&AAA&CCC")
     @test length(fc) == 9
@@ -70,8 +98,25 @@ using Unitful
     # @test size(fc) == (3, 3, 3)
     # @test fc.nstrands == 3
 
+    # multiple strands don't work in comparative (alifold) mode
     @test_throws ArgumentError FoldCompound(["GGGA", "GCGG", "G"])
     @test_throws ArgumentError FoldCompound(["GG&C", "AA&U"])
+
+    # weird behaviour with multiple strands and min_loop_size
+    for h = 0:5
+        fc = FoldCompound("GGG"; min_loop_size=h)
+        @test fc.min_loop_size == h
+        fc = FoldCompound("GGG&CCC"; min_loop_size=h)
+        if h == 3
+            # TODO: why doesn't this work, especially only this case?
+            # fc.min_loop_size == 0 in this case
+            # see model.h, lines 223-225 in ViennaRNA-2.5.0 source code
+            # where it says that this can default to 0 in cofolding context
+            @test_broken fc.min_loop_size == h
+        else
+            @test fc.min_loop_size == h
+        end
+    end
 end
 
 @testset "Pairtable" begin
