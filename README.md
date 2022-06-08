@@ -43,7 +43,7 @@ fc = FoldCompound("GGGGGAAAAACCCCCC";
                   circular=false)
 ```
 
-Optional keyword arguments
+Important keyword arguments
 
 - `params` determines the energy parameter set used, options are
   `:RNA_Turner1999`, `:RNA_Turner2004`, `:RNA_Andronescu2007`,
@@ -53,10 +53,27 @@ Optional keyword arguments
   `ΔG = ΔH - TΔS` (the energy parameter sets contain enthalpy and
   entropy contributions). The default is `37u"°C"`
 
-- `circular=false` determines if RNA strand is circular
+Model details (additional keyword arguments):
+- `circular`: determines if the RNA strand is circular, i.e. the
+  5'-end and 3'-end are covalently bonded. Default is `false`.
+- `dangles`: how to treat dangling base pairs in multiloops and the
+  exterior loop. Can be 0, 1, 2, or 3. See ViennaRNA docs for
+  details. Default is `2`.
+- `gquadruplex`: allow G-quadruplexes in predictions. Default is
+  `false`.
+- `log_ML`: use logarithmic energy model for multiloops. Default is
+  `false`.
+- `min_loop_length`: the minimum size of a loop (without the closing
+   base pair). Default is `3`.
+- `no_GU_basepairs`: disallow G-U basepairs. Default is `false`.
+- `no_GU_closure`: disallow G-U basepairs as closing pairs for
+  loops. Default is `false`.
+- `no_lonely_pairs`: disallow isolated base pairs. Default is `false`.
+- `special_hairpins`: use special hairpin energies for certain tri-,
+  tetra- and hexloops. Default is `true`.
+- `uniq_ML`: use unique decomposition for multiloops, needed for
+  `pbacktrack` and `subopt`. Default is `false`.
 
-- `uniq_ML=true` (unique multiloop decomposition) is needed for some
-  functions, e.g. `pbacktrack`. The default is `false`
 
 #### Multiple strands
 
