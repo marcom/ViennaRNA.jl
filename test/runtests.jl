@@ -20,6 +20,7 @@ using Unitful
         @test fc.min_loop_size == 3
         @test fc.no_GU_basepairs == false
         @test fc.no_GU_closure == false
+        @test fc.no_lonely_pairs == false
         @test fc.nstrands == 1
         @test fc.params_name == "RNA - Turner 2004"
         @test fc.special_hairpins == true
@@ -73,6 +74,10 @@ using Unitful
         fc = FoldCompound(s; no_GU_closure=true)
         @test length(fc) == 9
         @test fc.no_GU_closure == true
+        # no_lonely_pairs
+        fc = FoldCompound(s; no_lonely_pairs=true)
+        @test length(fc) == 9
+        @test fc.no_lonely_pairs == true
         # special_hairpins
         fc = FoldCompound(s; special_hairpins=false)
         @test length(fc) == 9

@@ -80,6 +80,7 @@ Model details (additional keyword arguments):
 - `no_GU_basepairs`: disallow G-U basepairs. Default is `false`.
 - `no_GU_closure`: disallow G-U basepairs as closing pairs for
   loops. Default is `false`.
+- `no_lonely_pairs`: disallow isolated base pairs. Default is `false`.
 - `special_hairpins`: use special hairpin energies for certain tri-,
   tetra- and hexloops. Default is `true`.
 - `uniq_ML`: use unique decomposition for multiloops, needed for
@@ -105,6 +106,7 @@ mutable struct FoldCompound
                           min_loop_size::Int=Int(LibRNA.TURN),
                           no_GU_basepairs::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_NO_GU),
                           no_GU_closure::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_NO_GU_CLOSURE),
+                          no_lonely_pairs::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_NO_LP),
                           special_hairpins::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_SPECIAL_HP),
                           uniq_ML::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_UNIQ_ML))
         if dangles < 0 || dangles > 3
@@ -146,6 +148,7 @@ mutable struct FoldCompound
         LibRNA.vrna_md_defaults_min_loop_size(min_loop_size)
         LibRNA.vrna_md_defaults_noGU(Int(no_GU_basepairs))
         LibRNA.vrna_md_defaults_noGUclosure(Int(no_GU_closure))
+        LibRNA.vrna_md_defaults_noLP(Int(no_lonely_pairs))
         LibRNA.vrna_md_defaults_special_hp(Int(special_hairpins))
         LibRNA.vrna_md_defaults_uniq_ML(Int(uniq_ML))
 
@@ -190,6 +193,8 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         return Bool(fc.uptr.params[].model_details.noGU[])
     elseif sym == :no_GU_closure
         return Bool(fc.uptr.params[].model_details.noGUclosure[])
+    elseif sym == :no_lonely_pairs
+        return Bool(fc.uptr.params[].model_details.noLP[])
     elseif sym == :nstrands
         return Int(fc.uptr.strands[])
     elseif sym == :params_name
@@ -226,7 +231,7 @@ function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     println(io, "  temperature : $(fc.temperature)")
     println(io, "  options     : circular=$(fc.circular), dangles=$(fc.dangles), gquadruplex=$(fc.gquadruplex), log_ML=$(fc.log_ML),")
     println(io, "                min_loop_size=$(fc.min_loop_size), no_GU_basepairs=$(fc.no_GU_basepairs), no_GU_closure=$(fc.no_GU_closure),")
-    println(io, "                special_hairpins=$(fc.special_hairpins), uniq_ML=$(fc.uniq_ML)")
+    println(io, "                no_lonely_pairs=$(fc.no_lonely_pairs), special_hairpins=$(fc.special_hairpins), uniq_ML=$(fc.uniq_ML)")
     if length(fc.msa) == 1
         for (i,s) in enumerate(first(fc.msa_strands))
             println(io,   "  strand $i    : $(s)")
