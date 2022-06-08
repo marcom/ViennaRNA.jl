@@ -185,7 +185,7 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
     elseif sym == :log_ML
         return Bool(fc.uptr.params[].model_details.logML[])
     elseif sym == :min_loop_size
-        return fc.uptr.params[].model_details.min_loop_size[]
+        return Int(fc.uptr.params[].model_details.min_loop_size[])
     elseif sym == :no_GU_basepairs
         return Bool(fc.uptr.params[].model_details.noGU[])
     elseif sym == :no_GU_closure
