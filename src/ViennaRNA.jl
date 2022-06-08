@@ -146,6 +146,7 @@ mutable struct FoldCompound
     end
 end
 
+# TODO: fc.uptr.length[] |> Int
 Base.length(fc::FoldCompound) = sum(size(fc))
 
 Base.size(fc::FoldCompound) = ntuple(i -> length(first(fc.msa_strands)[i]), fc.nstrands)
@@ -162,7 +163,7 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
     elseif sym == :min_loop_size
         return fc.uptr.params[].model_details.min_loop_size[]
     elseif sym == :nstrands
-        return length(first(fc.msa_strands))
+        return Int(fc.uptr.strands[])
     elseif sym == :params_name
         return unsafe_string(reinterpret(Ptr{UInt8}, pointer(fc.uptr.params[].param_file)))
     elseif sym == :temperature
