@@ -1,7 +1,7 @@
 name = "ViennaRNA"
 uuid = "05a721ad-238d-4945-8c85-8b5c1fff3465"
 authors = ["Marco Matthies <marco.matthies@gmail.com>"]
-version = "0.6.5"
+version = "0.6.6"
 
 [deps]
 CEnum = "fa961155-64e5-5f13-b03f-caf6b980ea82"
