@@ -854,6 +854,5 @@ function heat_capacity(sequence::AbstractString, Tmin::Quantity, Tmax::Quantity,
 end
 
 include("utils.jl")
-include("plot_structure.jl")
 
 end # module ViennaRNA

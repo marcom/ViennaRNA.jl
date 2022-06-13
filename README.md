@@ -198,22 +198,13 @@ heat_capacity(fc, 10u"°C", 60u"°C", 1u"°C"; mpoints=5)
 ### Plotting structures
 
 ```julia
-# plot_structure (experimental), draws an image of a secondary structure
-#
-# There is also an experimental plot_structure_makie which looks a bit
-# nicer but currently has a rather large time to first plot (half a
-# minute). See issue #5. Subsequent plots are very fast.
-dbn = "(((...)))"
-seq = "GGGAAACCC"
-plot_structure(dbn)
-plot_structure(dbn; sequence=seq, base_colors=prob_of_basepairs(seq, dbn))
-```
-
-```julia
 # plot coordinates of a secondary structure, returns two arrays with
 # x and y coordinates
 plot_coords("(((...)))")  # => Tuple{Float32[], Float32[]}
 ```
+
+See [DrawRNA.jl](https://github.com/marcom/DrawRNA.jl) for more
+structure drawing functionality.
 
 ### Inverse folding / sequence design
 
@@ -221,3 +212,9 @@ plot_coords("(((...)))")  # => Tuple{Float32[], Float32[]}
 inverse_fold("AAAAAAA", "((...))")     a# => ("GCAAAGC", 2.0f0)
 inverse_pf_fold("AAAAAAA", "((...))")  # => ("GCCAAGC", 2.0244526863098145 kcal mol^-1)
 ```
+
+
+## Related Julia packages
+
+- [LinearFold](https://github.com/marcom/LinearFold.jl)
+- [DrawRNA](https://github.com/marcom/DrawRNA.jl)
