@@ -216,5 +216,5 @@ inverse_pf_fold("AAAAAAA", "((...))")  # => ("GCCAAGC", 2.0244526863098145 kcal 
 
 ## Related Julia packages
 
-- [LinearFold](https://github.com/marcom/LinearFold.jl)
-- [PlotRNA](https://github.com/marcom/PlotRNA.jl)
+- [LinearFold.jl](https://github.com/marcom/LinearFold.jl)
+- [PlotRNA.jl](https://github.com/marcom/PlotRNA.jl)
