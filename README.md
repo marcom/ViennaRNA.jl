@@ -203,8 +203,8 @@ heat_capacity(fc, 10u"°C", 60u"°C", 1u"°C"; mpoints=5)
 plot_coords("(((...)))")  # => Tuple{Float32[], Float32[]}
 ```
 
-See [DrawRNA.jl](https://github.com/marcom/DrawRNA.jl) for more
-structure drawing functionality.
+See [PlotRNA.jl](https://github.com/marcom/PlotRNA.jl) for more
+secondary structure plotting functionality.
 
 ### Inverse folding / sequence design
 
@@ -217,4 +217,4 @@ inverse_pf_fold("AAAAAAA", "((...))")  # => ("GCCAAGC", 2.0244526863098145 kcal 
 ## Related Julia packages
 
 - [LinearFold](https://github.com/marcom/LinearFold.jl)
-- [DrawRNA](https://github.com/marcom/DrawRNA.jl)
+- [PlotRNA](https://github.com/marcom/PlotRNA.jl)
