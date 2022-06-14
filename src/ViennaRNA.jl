@@ -164,8 +164,6 @@ mutable struct FoldCompound
             @warn "min_loop_size was specified as $min_loop_size, but got set to $(fc.min_loop_size) by ViennaRNA"
         end
         finalizer(fc) do x
-            # TODO: do we have to call vrna_mx_mfe_free or
-            #       vrna_mx_pf_free here ourselves?
             LibRNA.vrna_fold_compound_free(x.ptr)
         end
     end

@@ -213,6 +213,19 @@ inverse_fold("AAAAAAA", "((...))")     a# => ("GCAAAGC", 2.0f0)
 inverse_pf_fold("AAAAAAA", "((...))")  # => ("GCCAAGC", 2.0244526863098145 kcal mol^-1)
 ```
 
+## Reducing memory usage
+
+When creating many `FoldCompound`s, running `finalize` manually will
+avoid excessive memory buildup.
+
+```julia
+for i = 1:100_000
+    fc = FoldCompound("ACGU")
+    # do something with fc
+    finalize(fc)
+end
+```
+
 
 ## Related Julia packages
 
