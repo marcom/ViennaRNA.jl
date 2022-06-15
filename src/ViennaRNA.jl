@@ -60,8 +60,9 @@ Input arguments:
    (alifold). A vector of sequences which may contain multiple
    strands, denoted by '&', and gap '-' characters
 - `params`: energy parameter set, legal values are `:RNA_Turner1999`,
-  `:RNA_Turner2004`, `:RNA_Andronescu2007`, `:RNA_Langdon2018`.
-  Default is `:RNA_Turner2004`.
+  `:RNA_Turner2004`, `:RNA_Andronescu2007`, `:RNA_Langdon2018`,
+  `:DNA_Mathews1999`, `:DNA_Mathews2004`.  Default is
+  `:RNA_Turner2004`.
 - `temperature`: the temperature at which calculations are performed.
   Default is `37u"°C"`.
 
@@ -133,6 +134,10 @@ mutable struct FoldCompound
             err = LibRNA.vrna_params_load_RNA_Andronescu2007()
         elseif params == :RNA_Langdon2018
             err = LibRNA.vrna_params_load_RNA_Langdon2018()
+        elseif params == :DNA_Mathews1999
+            err = LibRNA.vrna_params_load_DNA_Mathews1999()
+        elseif params == :DNA_Mathews2004
+            err = LibRNA.vrna_params_load_DNA_Mathews2004()
         else
             throw(ArgumentError("unknown energy parameters: $(params)"))
         end

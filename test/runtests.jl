@@ -92,6 +92,10 @@ using Unitful
         @test length(String(take!(buf))) > 0
     end
 
+    # DNA
+    fc = FoldCompound("GATTACA"; params=:DNA_Mathews1999)
+    @test length(fc) == 7
+
     # multiple strands
     fc = FoldCompound("GGG&AAA&CCC")
     @test length(fc) == 9
