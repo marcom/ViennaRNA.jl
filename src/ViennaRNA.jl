@@ -42,10 +42,6 @@ import .LibRNA_Helper
 module Private
 using Unitful: @u_str
 
-# TODO: rename en_unit to unit_energy, en_int_unit to unit_energy_int
-# const en_unit = 1.0u"kcal/mol"
-# const en_int_unit = 0.01u"kcal/mol"
-
 const unit_energy = 1.0u"kcal/mol"
 const unit_energy_int = 0.01u"kcal/mol"
 const unit_temperature = u"°C"
