@@ -45,9 +45,10 @@ fc = FoldCompound("GGGGGAAAAACCCCCC";
 
 Important keyword arguments
 
-- `params` determines the energy parameter set used, options are
+- `params`: energy parameter set, possible values are
   `:RNA_Turner1999`, `:RNA_Turner2004`, `:RNA_Andronescu2007`,
-  `:RNA_Langdon2018`. The default is `:RNA_Turner2004`
+  `:RNA_Langdon2018`, `:DNA_Mathews1999`, `:DNA_Mathews2004`.  Default
+  is `:RNA_Turner2004`.
 
 - `temperature` is used to rescale the free energies with the formula
   `ΔG = ΔH - TΔS` (the energy parameter sets contain enthalpy and

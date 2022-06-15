@@ -59,10 +59,10 @@ Input arguments:
 - `msa`: multiple sequence alignment, for comparative folding
    (alifold). A vector of sequences which may contain multiple
    strands, denoted by '&', and gap '-' characters
-- `params`: energy parameter set, legal values are `:RNA_Turner1999`,
-  `:RNA_Turner2004`, `:RNA_Andronescu2007`, `:RNA_Langdon2018`,
-  `:DNA_Mathews1999`, `:DNA_Mathews2004`.  Default is
-  `:RNA_Turner2004`.
+- `params`: energy parameter set, possible values are
+  `:RNA_Turner1999`, `:RNA_Turner2004`, `:RNA_Andronescu2007`,
+  `:RNA_Langdon2018`, `:DNA_Mathews1999`, `:DNA_Mathews2004`.  Default
+  is `:RNA_Turner2004`.
 - `temperature`: the temperature at which calculations are performed.
   Default is `37u"°C"`.
 
