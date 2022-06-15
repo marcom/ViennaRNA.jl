@@ -36,13 +36,23 @@ function free_structure_list(ptr::Ptr, num::Integer)
     end
     Libc.free(ptr)
 end
-end
+end # module LibRNA_Helper
 import .LibRNA_Helper
 
+module Private
+using Unitful: @u_str
+
 # TODO: rename en_unit to unit_energy, en_int_unit to unit_energy_int
-const en_unit = 1.0u"kcal/mol"
-const en_int_unit = 0.01u"kcal/mol"
+# const en_unit = 1.0u"kcal/mol"
+# const en_int_unit = 0.01u"kcal/mol"
+
+const unit_energy = 1.0u"kcal/mol"
+const unit_energy_int = 0.01u"kcal/mol"
 const unit_temperature = u"°C"
+
+end # module Private
+import .Private
+
 
 # TODO: use $(LibRNA.VRNA_MODEL_DEFAULT_GQUAD) string interpolation
 # here instead of hardcoding defaults
@@ -210,7 +220,7 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         if par_temperature != md_temperature
             error("params temperature and model_details temperature don't agree")
         end
-        return par_temperature * unit_temperature
+        return par_temperature * Private.unit_temperature
     elseif sym == :uniq_ML
         return Bool(fc.uptr.params[].model_details.uniq_ML[])
     else
@@ -456,7 +466,7 @@ function energy(fc::FoldCompound,
     else
         en = LibRNA.vrna_eval_structure(fc.ptr, structure)
     end
-    return en * en_unit
+    return en * Private.unit_energy
 end
 
 function energy(sequence::AbstractString,
@@ -481,7 +491,7 @@ function mfe(fc::FoldCompound)
     en_mfe = LibRNA.vrna_mfe(fc.ptr, cstr_structure)
     structure = unsafe_string(cstr_structure)
     Libc.free(cstr_structure)
-    return structure, en_mfe * en_unit
+    return structure, en_mfe * Private.unit_energy
 end
 
 mfe(sequence::AbstractString) =
@@ -506,7 +516,7 @@ function partfn(fc::FoldCompound)
     RTlogZ = LibRNA.vrna_pf(fc.ptr, cstr_structure)
     structure = unsafe_string(cstr_structure)
     Libc.free(cstr_structure)
-    return structure, RTlogZ * en_unit
+    return structure, RTlogZ * Private.unit_energy
 end
 
 partfn(sequence::AbstractString) = partfn(FoldCompound(sequence))
@@ -643,9 +653,8 @@ All suboptimal structures with an energy not more than `delta` above
 the minimum free energy structure.
 """
 function subopt(fc::FoldCompound; delta::Quantity, sorted::Bool=true)
-#    fc.ptr.params.model_details.uniq_ML[] == 1 ||
-#        throw(ArgumentError("must have fc.params.model_details.uniq_ML == 1"))
-    delta_nounit = uconvert(u"kcal/mol", delta) / en_int_unit
+    fc.uniq_ML == true || throw(ArgumentError("FoldCompound must use uniq_ML=true"))
+    delta_nounit = uconvert(u"kcal/mol", delta) / Private.unit_energy_int
     delta_int = round(Int, delta_nounit)
     # TODO: warn if this float -> int conversion leads to loss of
     # precision, e.g. in the case that delta == 0.0001 kcal/mol where
@@ -655,7 +664,7 @@ function subopt(fc::FoldCompound; delta::Quantity, sorted::Bool=true)
     s == C_NULL && return subs
     i = 1
     while (si = unsafe_load(s, i)).structure != C_NULL
-        push!(subs, (unsafe_string(si.structure), si.energy * en_unit))
+        push!(subs, (unsafe_string(si.structure), si.energy * Private.unit_energy))
         i += 1
     end
     LibRNA_Helper.free_subopt_solutions(s)
@@ -679,7 +688,7 @@ function subopt_zuker(fc::FoldCompound)
     s == C_NULL && return subs
     i = 1
     while (si = unsafe_load(s, i)).structure != C_NULL
-        push!(subs, (unsafe_string(si.structure), si.energy * en_unit))
+        push!(subs, (unsafe_string(si.structure), si.energy * Private.unit_energy))
         i += 1
     end
     LibRNA_Helper.free_subopt_solutions(s)
@@ -728,7 +737,7 @@ function inverse_pf_fold(start::AbstractString, target::AbstractString)
     #       needed because inverse_pf_fold mutates its first argument
     design = join(collect(start))
     RT_log_p = LibRNA.inverse_pf_fold(design, target)
-    return design, RT_log_p * en_unit
+    return design, RT_log_p * Private.unit_energy
 end
 
 # kinetics and move sets
