@@ -50,8 +50,8 @@ end # module Private
 import .Private
 
 
-# TODO: use $(LibRNA.VRNA_MODEL_DEFAULT_GQUAD) string interpolation
-# here instead of hardcoding defaults
+# TODO: in docstring, use $(LibRNA.VRNA_MODEL_DEFAULT_GQUAD) string
+#       interpolation here instead of hardcoding defaults
 """
     FoldCompound(seq::AbstractString; [params, temperature], [model_details...])
     FoldCompound(msa::Vector{<:AbstractString}; [params, temperature], [model_details...])
@@ -414,7 +414,9 @@ ensemble_defect(fc::FoldCompound, structure::AbstractString) =
 function ensemble_defect(sequence::AbstractString, structure::AbstractString)
     fc = FoldCompound(sequence)
     partfn(fc)
-    return ensemble_defect(fc, Pairtable(structure))
+    res = ensemble_defect(fc, Pairtable(structure))
+    finalize(fc)
+    return res
 end
 
 # probability of a structure in the ensemble
@@ -436,7 +438,9 @@ end
 function prob_of_structure(sequence::AbstractString, structure::AbstractString)
     fc = FoldCompound(sequence)
     partfn(fc)
-    return prob_of_structure(fc, structure)
+    res = prob_of_structure(fc, structure)
+    finalize(fc)
+    return res
 end
 
 # free energy change of folding
@@ -470,7 +474,9 @@ function energy(sequence::AbstractString,
                 verbose::Bool=false,
                 verbosity_level::Integer=LibRNA.VRNA_VERBOSITY_DEFAULT)
     fc = FoldCompound(sequence; options=LibRNA.VRNA_OPTION_EVAL_ONLY)
-    return energy(fc, structure; verbose, verbosity_level)
+    res = energy(fc, structure; verbose, verbosity_level)
+    finalize(fc)
+    return res
 end
 
 # minimum free energy (mfe) structure
@@ -490,8 +496,12 @@ function mfe(fc::FoldCompound)
     return structure, en_mfe * Private.unit_energy
 end
 
-mfe(sequence::AbstractString) =
-    mfe(FoldCompound(sequence; options=LibRNA.VRNA_OPTION_MFE))
+function mfe(sequence::AbstractString)
+    fc = FoldCompound(sequence; options=LibRNA.VRNA_OPTION_MFE)
+    res = mfe(fc)
+    finalize(fc)
+    return res
+end
 
 # partition function
 
@@ -515,7 +525,12 @@ function partfn(fc::FoldCompound)
     return structure, RTlogZ * Private.unit_energy
 end
 
-partfn(sequence::AbstractString) = partfn(FoldCompound(sequence))
+function partfn(sequence::AbstractString)
+    fc = FoldCompound(sequence)
+    res = partfn(fc)
+    finalize(fc)
+    return res
+end
 
 # basepair probabilities
 
@@ -546,7 +561,9 @@ end
 function bpp(sequence::AbstractString)
     fc = FoldCompound(sequence)
     partfn(fc)
-    return bpp(fc)
+    res = bpp(fc)
+    finalize(fc)
+    return res
 end
 
 # stochastic backtrack
@@ -581,7 +598,9 @@ function pbacktrack(sequence::AbstractString; num_samples::Integer=1,
                     options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
     fc = FoldCompound(sequence; uniq_ML=true)
     partfn(fc)
-    return pbacktrack(fc; num_samples, options)
+    res = pbacktrack(fc; num_samples, options)
+    finalize(fc)
+    return res
 end
 
 # maximum expected accuracy (MEA) structure
@@ -607,7 +626,9 @@ end
 function mea(sequence::AbstractString; gamma=1.0)
     fc = FoldCompound(sequence)
     partfn(fc)
-    return mea(fc; gamma)
+    res = mea(fc; gamma)
+    finalize(fc)
+    return res
 end
 
 # centroid structure of ensemble
@@ -635,7 +656,9 @@ end
 function centroid(sequence::AbstractString)
     fc = FoldCompound(sequence)
     partfn(fc)
-    return centroid(fc)
+    res = centroid(fc)
+    finalize(fc)
+    return res
 end
 
 
@@ -669,7 +692,9 @@ end
 
 function subopt(sequence::AbstractString; delta::Quantity, sorted::Bool=true)
     fc = FoldCompound(sequence; uniq_ML=true, options=LibRNA.VRNA_OPTION_MFE)
-    return subopt(fc; delta, sorted)
+    res = subopt(fc; delta, sorted)
+    finalize(fc)
+    return res
 end
 
 """
@@ -693,7 +718,9 @@ end
 
 function subopt_zuker(sequence::AbstractString)
     fc = FoldCompound(sequence; options=LibRNA.VRNA_OPTION_MFE)
-    return subopt_zuker(fc)
+    res = subopt_zuker(fc)
+    finalize(fc)
+    return res
 end
 
 # inverse folding / sequence design
@@ -858,7 +885,10 @@ end
 
 function heat_capacity(sequence::AbstractString, Tmin::Quantity, Tmax::Quantity,
                        Tincrement::Quantity=1.0u"°C"; mpoints::Integer=2)
-    heat_capacity(FoldCompound(sequence), Tmin, Tmax, Tincrement; mpoints)
+    fc = FoldCompound(sequence)
+    res = heat_capacity(fc, Tmin, Tmax, Tincrement; mpoints)
+    finalize(fc)
+    return res
 end
 
 include("utils.jl")
