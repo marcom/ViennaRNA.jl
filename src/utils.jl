@@ -1,4 +1,3 @@
-
 """
     prob_of_basepairs(fc, pt)
     prob_of_basepairs(fc, structure)
