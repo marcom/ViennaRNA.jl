@@ -188,9 +188,11 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         mat = fc.uptr.matrices[]
         realsym = Symbol(last(split(string(sym), '_')))
         if realsym ∈ (:c, :fML, :fM1)
-            return unsafe_loadmat(fc, getproperty(mat, realsym))
+            jindx = fc.uptr.jindx[]
+            return unsafe_loadmat(fc, getproperty(mat, realsym)[];
+                                  indexfn=(i,j)->jindx[j + 1] + i + 1)
         elseif realsym ∈ (:f5, :f3, :fM2)
-            return unsafe_loadvec(fc, getproperty(mat, realsym))
+            return unsafe_loadvec(fc, getproperty(mat, realsym)[])
         elseif realsym ∈ (:Fc, :FcH, :FcI, :FcM)
             return Int(getproperty(mat, realsym)[])
         else
@@ -203,10 +205,16 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         end
         expmat = fc.uptr.exp_matrices[]
         realsym = Symbol(last(split(string(sym), '_')))
-        if realsym ∈ (:q, :qb, :qm, :qm1, :probs)
-            return unsafe_loadmat(fc, getproperty(expmat, realsym))
+        if realsym ∈ (:q, :qb, :qm, :qm1)
+            jindx = fc.uptr.jindx[]
+            return unsafe_loadmat(fc, getproperty(expmat, realsym)[];
+                                  indexfn=(i,j)->jindx[j + 1] + i + 1)
+        elseif realsym ∈ (:probs,)
+            iindx = fc.uptr.iindx[]
+            return unsafe_loadmat(fc, getproperty(expmat, realsym)[];
+                                  indexfn=(i,j)->iindx[i + 1] - j + 1)
         elseif realsym ∈ (:qm2,)
-            return unsafe_loadvec(fc, getproperty(expmat, realsym))
+            return unsafe_loadvec(fc, getproperty(expmat, realsym)[])
         else
             return getfield(fc, sym) # fallback
         end
@@ -542,18 +550,7 @@ function bpp(fc::FoldCompound)
     # TODO: return upper triangular matrix type
     fc.has_exp_matrices ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
-    n = length(fc)
-    p = zeros(n,n)
-    f = unsafe_load(fc.ptr)
-    index = f.iindx
-    probs = unsafe_load(f.exp_matrices).probs
-    for i = 1:n-1
-        for j = i+1:n
-            p[i,j] = unsafe_load(probs, unsafe_load(index, i + 1) - j + 1)
-            p[j,i] = p[i,j]
-        end
-    end
-    return p
+    return fc.exp_matrices_probs
 end
 
 function bpp(sequence::AbstractString)
