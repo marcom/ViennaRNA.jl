@@ -151,6 +151,8 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         return Int(fc.uptr.params[].model_details.dangles[])
     elseif sym == :gquadruplex
         return Bool(fc.uptr.params[].model_details.gquad[])
+    elseif sym == :has_matrices
+        fc.uptr.matrices[] != C_NULL
     elseif sym == :has_exp_matrices
         fc.uptr.exp_matrices[] != C_NULL
     elseif sym == :log_ML
@@ -178,18 +180,53 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         return par_temperature * Private.unit_temperature
     elseif sym == :uniq_ML
         return Bool(fc.uptr.params[].model_details.uniq_ML[])
+    elseif startswith(String(sym), "matrices_")
+        fc.has_matrices || begin
+            @warn "no information stored yet, run mfe() first (fc.uptr.matrices[] == C_NULL)"
+            return nothing
+        end
+        mat = fc.uptr.matrices[]
+        realsym = Symbol(last(split(string(sym), '_')))
+        if realsym ∈ (:c, :fML, :fM1)
+            return unsafe_loadmat(fc, getproperty(mat, realsym))
+        elseif realsym ∈ (:f5, :f3, :fM2)
+            return unsafe_loadvec(fc, getproperty(mat, realsym))
+        elseif realsym ∈ (:Fc, :FcH, :FcI, :FcM)
+            return Int(getproperty(mat, realsym)[])
+        else
+            return getfield(fc, sym) # fallback
+        end
+    elseif startswith(String(sym), "exp_matrices_")
+        fc.has_exp_matrices || begin
+            @warn "no information stored yet, run partfn() first (fc.uptr.exp_matrices[] == C_NULL)"
+            return nothing
+        end
+        expmat = fc.uptr.exp_matrices[]
+        realsym = Symbol(last(split(string(sym), '_')))
+        if realsym ∈ (:q, :qb, :qm, :qm1, :probs)
+            return unsafe_loadmat(fc, getproperty(expmat, realsym))
+        elseif realsym ∈ (:qm2,)
+            return unsafe_loadvec(fc, getproperty(expmat, realsym))
+        else
+            return getfield(fc, sym) # fallback
+        end
     else
-        # fallback
-        getfield(fc, sym)
+        return getfield(fc, sym) # fallback
     end
 end
 
 Base.propertynames(fc::FoldCompound) =
     (fieldnames(typeof(fc))...,
-     :circular, :dangles, :gquadruplex, :has_exp_matrices, :log_ML,
-     :min_loop_size, :no_GU_basepairs, :no_GU_closure,
+     :circular, :dangles, :gquadruplex, :has_matrices, :has_exp_matrices,
+     :log_ML, :min_loop_size, :no_GU_basepairs, :no_GU_closure,
      :no_lonely_pairs, :nstrands, :params_name, :special_hairpins,
-     :temperature, :uniq_ML)
+     :temperature, :uniq_ML,
+     :matrices_c, :matrices_fML, :matrices_fM1,
+     :matrices_f5, :matrices_f3, :matrices_fM2,
+     :matrices_Fc, :matrices_FcH, :matrices_FcI, :matrices_FcM,
+     :exp_matrices_q, :exp_matrices_qb, :exp_matrices_qm, :exp_matrices_qm1, :exp_matrices_probs,
+     :exp_matrices_qm2,
+     )
 
 function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     strand = "$(fc.nstrands) strand" * (fc.nstrands > 1 ? "s" : "")
@@ -337,7 +374,9 @@ end
 function mean_bp_distance(sequence::AbstractString)
     fc = FoldCompound(sequence)
     partfn(fc)
-    return mean_bp_distance(fc)
+    res = mean_bp_distance(fc)
+    finalize(fc)
+    return res
 end
 
 # ensemble defect: mean distance of ensemble to a target structure

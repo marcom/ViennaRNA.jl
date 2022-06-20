@@ -27,5 +27,6 @@ import .LibRNA_Helper
 
 include("wrappers.jl")
 include("extras.jl")
+include("utils.jl")
 
 end # module ViennaRNA

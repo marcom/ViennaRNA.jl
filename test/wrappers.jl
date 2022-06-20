@@ -386,3 +386,31 @@ end
     @test hcs isa Vector{Tuple{typeof(1.0f0u"°C"),typeof(1.0f0u"kcal/mol/K")}}
     @test length(hcs) == n
 end
+
+@testset "FoldCompound dp matrices" begin
+    # test MFE matrices fields from fc.uptr.matrices[]
+    seq = "GGGAAACCC"
+    fc = FoldCompound(seq; uniq_ML=true, circular=true)
+    mfe(fc)
+    @test fc.matrices_c   isa Union{Nothing,Matrix}
+    @test fc.matrices_fML isa Union{Nothing,Matrix}
+    @test fc.matrices_fM1 isa Union{Nothing,Matrix}
+    @test fc.matrices_fM2 isa Union{Nothing,Vector}
+    @test fc.matrices_f5  isa Union{Nothing,Vector}
+    @test fc.matrices_f3  isa Union{Nothing,Vector}
+    @test fc.matrices_Fc  isa Union{Nothing,Int}
+    @test fc.matrices_FcH isa Union{Nothing,Int}
+    @test fc.matrices_FcI isa Union{Nothing,Int}
+    @test fc.matrices_FcM isa Union{Nothing,Int}
+
+    # test partition function fields from fc.uptr.exp_matrices[]
+    seq = "GGGAAACCC"
+    fc = FoldCompound(seq; circular=true)
+    partfn(fc)
+    @test fc.exp_matrices_q     isa Union{Nothing,Matrix}
+    @test fc.exp_matrices_qb    isa Union{Nothing,Matrix}
+    @test fc.exp_matrices_qm    isa Union{Nothing,Matrix}
+    @test fc.exp_matrices_qm1   isa Union{Nothing,Matrix}
+    @test fc.exp_matrices_probs isa Union{Nothing,Matrix}
+    @test fc.exp_matrices_qm2   isa Union{Nothing,Vector}
+end
