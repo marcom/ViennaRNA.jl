@@ -547,10 +547,12 @@ end
 Calculate the matrix of base-pair probabilities.
 """
 function bpp(fc::FoldCompound)
-    # TODO: return upper triangular matrix type
+    # TODO: return symmetric (only store upper triangular part) matrix type
     fc.has_exp_matrices ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
-    return fc.exp_matrices_probs
+    p_ut = fc.exp_matrices_probs
+    # p_ut is upper-triangular with empty diagonal, make it symmetric
+    return p_ut + transpose(p_ut)
 end
 
 function bpp(sequence::AbstractString)
