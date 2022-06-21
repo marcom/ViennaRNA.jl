@@ -180,6 +180,7 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         return par_temperature * Private.unit_temperature
     elseif sym == :uniq_ML
         return Bool(fc.uptr.params[].model_details.uniq_ML[])
+    # matrices_{c,fML,fM1,f5,f3,fM2,Fc,FcH,FcI,FcM}
     elseif startswith(String(sym), "matrices_")
         fc.has_matrices || begin
             @warn "no information stored yet, run mfe() first (fc.uptr.matrices[] == C_NULL)"
@@ -198,6 +199,7 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         else
             return getfield(fc, sym) # fallback
         end
+    # exp_matrices_{q,qb,qm,qm1,probs,qm2,expMLbase,scale}
     elseif startswith(String(sym), "exp_matrices_")
         fc.has_exp_matrices || begin
             @warn "no information stored yet, run partfn() first (fc.uptr.exp_matrices[] == C_NULL)"
@@ -205,15 +207,15 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         end
         expmat = fc.uptr.exp_matrices[]
         realsym = Symbol(last(split(string(sym), '_')))
-        if realsym ∈ (:q, :qb, :qm, :qm1)
-            jindx = fc.uptr.jindx[]
-            return unsafe_loadmat(fc, getproperty(expmat, realsym)[];
-                                  indexfn=(i,j)->jindx[j + 1] + i + 1)
-        elseif realsym ∈ (:probs,)
+        if realsym ∈ (:q, :qb, :qm, :probs)
             iindx = fc.uptr.iindx[]
             return unsafe_loadmat(fc, getproperty(expmat, realsym)[];
                                   indexfn=(i,j)->iindx[i + 1] - j + 1)
-        elseif realsym ∈ (:qm2,)
+        elseif realsym ∈ (:qm1,)
+            iindx = fc.uptr.iindx[]
+            return unsafe_loadmat(fc, getproperty(expmat, realsym)[];
+                                  indexfn=(i,j)->jindx[j + 1] + i + 1)
+        elseif realsym ∈ (:qm2, :expMLbase, :scale)
             return unsafe_loadvec(fc, getproperty(expmat, realsym)[])
         else
             return getfield(fc, sym) # fallback
@@ -233,7 +235,7 @@ Base.propertynames(fc::FoldCompound) =
      :matrices_f5, :matrices_f3, :matrices_fM2,
      :matrices_Fc, :matrices_FcH, :matrices_FcI, :matrices_FcM,
      :exp_matrices_q, :exp_matrices_qb, :exp_matrices_qm, :exp_matrices_qm1, :exp_matrices_probs,
-     :exp_matrices_qm2,
+     :exp_matrices_qm2, :exp_matrices_expMLbase, :exp_matrices_scale,
      )
 
 function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
