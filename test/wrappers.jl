@@ -391,32 +391,42 @@ end
     @testset "mfe matrices" begin
         # test MFE matrices fields from fc.uptr.matrices[]
         seq = "GGGAAACCC"
+        n = length(seq)
         fc = FoldCompound(seq; uniq_ML=true, circular=true)
         mfe(fc)
-        @test fc.matrices_c   isa Union{Nothing,Matrix}
-        @test fc.matrices_fML isa Union{Nothing,Matrix}
-        @test fc.matrices_fM1 isa Union{Nothing,Matrix}
-        @test fc.matrices_fM2 isa Union{Nothing,Vector}
-        @test fc.matrices_f5  isa Union{Nothing,Vector}
-        @test fc.matrices_f3  isa Union{Nothing,Vector}
-        @test fc.matrices_Fc  isa Union{Nothing,Int}
-        @test fc.matrices_FcH isa Union{Nothing,Int}
-        @test fc.matrices_FcI isa Union{Nothing,Int}
-        @test fc.matrices_FcM isa Union{Nothing,Int}
+        for sym in (:c, :fML, :fM1)
+            mat = getproperty(fc, Symbol("matrices_" * String(sym)))
+            @test mat isa Matrix
+            @test size(mat) == (n,n)
+        end
+        for sym in (:fM2, :f5)
+            vec = getproperty(fc, Symbol("matrices_" * String(sym)))
+            @test vec isa Vector
+            @test length(vec) == n
+        end
+        @test fc.matrices_Fc  isa Int
+        @test fc.matrices_FcH isa Int
+        @test fc.matrices_FcI isa Int
+        @test fc.matrices_FcM isa Int
+        # TODO: when does f3 get filled in?
+        @test fc.matrices_f3 isa Union{Nothing,Vector}
     end
 
     @testset "partfn matrices" begin
         # test partition function fields from fc.uptr.exp_matrices[]
         seq = "GGGAAACCC"
-        fc = FoldCompound(seq; circular=true)
+        n = length(seq)
+        fc = FoldCompound(seq; uniq_ML=true, circular=true)
         partfn(fc)
-        @test fc.exp_matrices_q         isa Union{Nothing,Matrix}
-        @test fc.exp_matrices_qb        isa Union{Nothing,Matrix}
-        @test fc.exp_matrices_qm        isa Union{Nothing,Matrix}
-        @test fc.exp_matrices_qm1       isa Union{Nothing,Matrix}
-        @test fc.exp_matrices_probs     isa Union{Nothing,Matrix}
-        @test fc.exp_matrices_qm2       isa Union{Nothing,Vector}
-        @test fc.exp_matrices_scale     isa Union{Nothing,Vector}
-        @test fc.exp_matrices_expMLbase isa Union{Nothing,Vector}
+        for sym in (:q, :qb, :qm, :qm1, :probs)
+            mat = getproperty(fc, Symbol("exp_matrices_" * String(sym)))
+            @test mat isa Matrix
+            @test size(mat) == (n,n)
+        end
+        for sym in (:qm2, :scale, :expMLbase)
+            vec = getproperty(fc, Symbol("exp_matrices_" * String(sym)))
+            @test vec isa Vector
+            @test length(vec) == n
+        end
     end
 end
