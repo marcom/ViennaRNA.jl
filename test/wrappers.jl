@@ -410,11 +410,13 @@ end
         seq = "GGGAAACCC"
         fc = FoldCompound(seq; circular=true)
         partfn(fc)
-        @test fc.exp_matrices_q     isa Union{Nothing,Matrix}
-        @test fc.exp_matrices_qb    isa Union{Nothing,Matrix}
-        @test fc.exp_matrices_qm    isa Union{Nothing,Matrix}
-        @test fc.exp_matrices_qm1   isa Union{Nothing,Matrix}
-        @test fc.exp_matrices_probs isa Union{Nothing,Matrix}
-        @test fc.exp_matrices_qm2   isa Union{Nothing,Vector}
+        @test fc.exp_matrices_q         isa Union{Nothing,Matrix}
+        @test fc.exp_matrices_qb        isa Union{Nothing,Matrix}
+        @test fc.exp_matrices_qm        isa Union{Nothing,Matrix}
+        @test fc.exp_matrices_qm1       isa Union{Nothing,Matrix}
+        @test fc.exp_matrices_probs     isa Union{Nothing,Matrix}
+        @test fc.exp_matrices_qm2       isa Union{Nothing,Vector}
+        @test fc.exp_matrices_scale     isa Union{Nothing,Vector}
+        @test fc.exp_matrices_expMLbase isa Union{Nothing,Vector}
     end
 end

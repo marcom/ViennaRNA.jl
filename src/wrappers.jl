@@ -212,7 +212,7 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
             return unsafe_loadmat(fc, getproperty(expmat, realsym)[];
                                   indexfn=(i,j)->iindx[i + 1] - j + 1)
         elseif realsym ∈ (:qm1,)
-            iindx = fc.uptr.iindx[]
+            jindx = fc.uptr.jindx[]
             return unsafe_loadmat(fc, getproperty(expmat, realsym)[];
                                   indexfn=(i,j)->jindx[j + 1] + i + 1)
         elseif realsym ∈ (:qm2, :expMLbase, :scale)
