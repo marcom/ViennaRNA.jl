@@ -92,9 +92,12 @@ using Unitful
         @test length(String(take!(buf))) > 0
     end
 
-    # DNA
+    # DNA params
     fc = FoldCompound("GATTACA"; params=:DNA_Mathews1999)
     @test length(fc) == 7
+
+    # error on unknown params
+    @test_throws ArgumentError FoldCompound("GATTACA"; params=:UNKNOWN_PARAMS)
 
     # multiple strands
     fc = FoldCompound("GGG&AAA&CCC")

@@ -1,9 +1,18 @@
 module Private
 using Unitful: @u_str
+import ViennaRNA.LibRNA
 
 const unit_energy = 1.0u"kcal/mol"
 const unit_energy_int = 0.01u"kcal/mol"
 const unit_temperature = u"°C"
+const PARAMS_LOADFNS = Dict(
+    :RNA_Turner1999     => LibRNA.vrna_params_load_RNA_Turner1999,
+    :RNA_Turner2004     => LibRNA.vrna_params_load_RNA_Turner2004,
+    :RNA_Andronescu2007 => LibRNA.vrna_params_load_RNA_Andronescu2007,
+    :RNA_Langdon2018    => LibRNA.vrna_params_load_RNA_Langdon2018,
+    :DNA_Mathews1999    => LibRNA.vrna_params_load_DNA_Mathews1999,
+    :DNA_Mathews2004    => LibRNA.vrna_params_load_DNA_Mathews2004,
+)
 
 end # module Private
 import .Private
@@ -91,21 +100,12 @@ mutable struct FoldCompound
             end
         end
         msa_strands = split.(msa, '&')
-        if params == :RNA_Turner1999
-            err = LibRNA.vrna_params_load_RNA_Turner1999()
-        elseif params == :RNA_Turner2004
-            err = LibRNA.vrna_params_load_RNA_Turner2004()
-        elseif params == :RNA_Andronescu2007
-            err = LibRNA.vrna_params_load_RNA_Andronescu2007()
-        elseif params == :RNA_Langdon2018
-            err = LibRNA.vrna_params_load_RNA_Langdon2018()
-        elseif params == :DNA_Mathews1999
-            err = LibRNA.vrna_params_load_DNA_Mathews1999()
-        elseif params == :DNA_Mathews2004
-            err = LibRNA.vrna_params_load_DNA_Mathews2004()
-        else
-            throw(ArgumentError("unknown energy parameters: $(params)"))
+        if ! haskey(Private.PARAMS_LOADFNS, params)
+            throw(ArgumentError("unknown energy parameters: $(params), allowed"
+                                * " values are: $(keys(Private.PARAMS_LOADFNS))"))
         end
+        loadparams = Private.PARAMS_LOADFNS[params]
+        err = loadparams()
         if err == 0
             error("Failed to load energy parameters $params_name")
         end
