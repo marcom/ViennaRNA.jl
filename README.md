@@ -40,7 +40,7 @@ fc = FoldCompound("GGGGGAAAAACCCCCC";
                   params=:RNA_Turner2004,
                   temperature=37u"°C",
                   uniq_ML=true,
-                  circular=true)
+                  circular=false)
 ```
 
 Important keyword arguments
