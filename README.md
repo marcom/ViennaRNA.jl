@@ -230,5 +230,6 @@ end
 
 ## Related Julia packages
 
+- [RNAstructure.jl](https://github.com/marcom/RNAstructure.jl)
 - [LinearFold.jl](https://github.com/marcom/LinearFold.jl)
 - [PlotRNA.jl](https://github.com/marcom/PlotRNA.jl)
