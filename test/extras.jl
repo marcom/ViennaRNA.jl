@@ -1,4 +1,5 @@
 @testset "prob_of_basepairs" begin
+    showtestset()
     sequence  = "GGGAACCUC"
     structure = "(((...)))"
     pt = Pairtable(structure)

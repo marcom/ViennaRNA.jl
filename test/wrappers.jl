@@ -4,6 +4,7 @@ using ViennaRNA: LibRNA
 using Unitful
 
 @testset "FoldCompound" begin
+    showtestset()
     for s in ["GGGAAACCC",
               ["GGG-A-CC-", "G-GGC-G-G"],
               ["GGG-A-CC-", "G-GGC-G-G", "CGC----CG"]]
@@ -134,6 +135,7 @@ using Unitful
 end
 
 @testset "Pairtable" begin
+    showtestset()
     pt = Pairtable("(((...)))")
     @test length(pt) == 9
     # getindex
@@ -167,15 +169,18 @@ end
 end
 
 @testset "bp_distance" begin
+    showtestset()
     @test bp_distance("((..))", "(....)") == 1
     @test_throws ArgumentError bp_distance("()", ".")
 end
 
 @testset "tree_edit_dist" begin
+    showtestset()
     @test tree_edit_dist("...", "()") == 3.0f0
 end
 
 @testset "mean_bp_distance" begin
+    showtestset()
     seq = "GGGAAACCC"
     fc = FoldCompound(seq)
     @test_throws ArgumentError mean_bp_distance(fc)
@@ -185,6 +190,7 @@ end
 end
 
 @testset "ensemble_defect" begin
+    showtestset()
     seq = "GGGAAACCCC"
     str = "(((....)))"
     fc = FoldCompound(seq)
@@ -198,6 +204,7 @@ end
 end
 
 @testset "prob_of_structure" begin
+    showtestset()
     seq = "GGGAAACCCC"
     str = "(((....)))"
     fc = FoldCompound(seq)
@@ -208,6 +215,7 @@ end
 end
 
 @testset "energy" begin
+    showtestset()
     seq = "GGGAAAACCCC"
     str = "(((....)))."
     fc = FoldCompound(seq)
@@ -231,6 +239,7 @@ end
 end
 
 @testset "mfe" begin
+    showtestset()
     seq = "GGGAAACCCC"
     fc = FoldCompound(seq)
     @test mfe(fc) isa Tuple{String,Unitful.Quantity}
@@ -238,6 +247,7 @@ end
 end
 
 @testset "partfn" begin
+    showtestset()
     seq = "GGGAAACCCC"
     fc = FoldCompound(seq)
     @test partfn(fc) isa Tuple{String,Unitful.Quantity}
@@ -245,6 +255,7 @@ end
 end
 
 @testset "bpp" begin
+    showtestset()
     seq = "GGGAAACCCC"
     n = length(seq)
 
@@ -261,6 +272,7 @@ end
 end
 
 @testset "pbacktrack" begin
+    showtestset()
     seq = "GGGGGAAAAACCCCCCCCAUUCA"
     fc = FoldCompound(seq; uniq_ML=true)
     partfn(fc)
@@ -274,6 +286,7 @@ end
 end
 
 @testset "mea" begin
+    showtestset()
     seq = "GGGGGAAAAACCCCCCCCAUUCA"
     fc = FoldCompound(seq)
     partfn(fc)
@@ -288,6 +301,7 @@ end
 end
 
 @testset "centroid" begin
+    showtestset()
     seq = "GGGGGAAAAACCCCCCCCAUUCA"
     fc = FoldCompound(seq)
     partfn(fc)
@@ -298,6 +312,7 @@ end
 end
 
 @testset "subopt" begin
+    showtestset()
     seq = "GGGGGAAAAACCCCCCCCAUUCA"
     fc = FoldCompound(seq; uniq_ML=true)
     s = subopt(fc; delta=5u"kcal/mol")
@@ -311,6 +326,7 @@ end
 end
 
 @testset "subopt_zuker" begin
+    showtestset()
     seq = "GGGGAAAACCCC"
     # TODO: the following sequences generate warnings
     # seq = "GGGUAAACCCAUUCAC"
@@ -323,6 +339,7 @@ end
 end
 
 @testset "inverse_fold" begin
+    showtestset()
     s = "((((....))))"
     @test inverse_fold("A"^length(s), s) isa Tuple{String,AbstractFloat}
     @test_throws ArgumentError inverse_fold("A", "()")
@@ -331,12 +348,14 @@ end
 end
 
 @testset "neighbors" begin
+    showtestset()
     fc = FoldCompound("GGGAAACCC")
     pt = Pairtable(".((...)).")
     @test neighbors(fc, pt) == [[(-2, -8)], [(-3, -7)], [(1, 9)]]
 end
 
 @testset "plot_coords" begin
+    showtestset()
     function test_plot_xy(s, x, y)
         @test x isa Vector{Float32}
         @test length(x) == length(s)
@@ -367,6 +386,7 @@ end
 end
 
 @testset "heat_capacity" begin
+    showtestset()
     s = "GGGAAACCC"
     fc = FoldCompound(s)
     Tmin = 10u"°C"
@@ -391,7 +411,9 @@ end
 end
 
 @testset "FoldCompound dp matrices" begin
+    showtestset()
     @testset "mfe matrices" begin
+        showtestset()
         # test MFE matrices fields from fc.uptr.matrices[]
         seq = "GGGAAACCC"
         n = length(seq)
@@ -416,6 +438,7 @@ end
     end
 
     @testset "partfn matrices" begin
+        showtestset()
         # test partition function fields from fc.uptr.exp_matrices[]
         seq = "GGGAAACCC"
         n = length(seq)
