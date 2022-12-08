@@ -4,3 +4,6 @@ output_file_path = "../lib/LibRNA.jl"
 module_name = "LibRNA"
 jll_pkg_name = "ViennaRNA_jll"
 export_symbol_prefixes = ["VRNA_", "vrna_"]
+prologue_file_path = "./prologue.jl"
+show_c_function_prototype = true
+extract_c_comment_style = "raw"

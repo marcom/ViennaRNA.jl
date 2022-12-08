@@ -1,7 +1,5 @@
 [deps]
 Clang = "40e3b903-d033-50b4-a0cc-940c62c95e31"
-ViennaRNA_jll = "b7a990de-7fa3-5a2e-8a39-d875e4dafecd"
 
 [compat]
-ViennaRNA_jll = "2.5"
 julia = "1.6"
