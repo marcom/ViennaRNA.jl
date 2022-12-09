@@ -274,15 +274,25 @@ end
 @testset "sample_structures" begin
     showtestset()
     seq = "GGGGGAAAAACCCCCCCCAUUCA"
+    n = length(seq)
     fc = FoldCompound(seq; uniq_ML=true)
     partfn(fc)
-    @test length(sample_structures(fc)) == 10
-    @test length(sample_structures(seq)) == 10
-    s = sample_structures(fc; num_samples=20)
-    @test length(s) == 20
-    s = sample_structures(fc; num_samples=5,
-                          options=ViennaRNA.LibRNA.VRNA_PBACKTRACK_NON_REDUNDANT)
-    @test length(s) == 5
+
+    for input in [seq, fc]
+        s = sample_structures(input)
+        @test length(s) == 10  # default num_samples
+        @test all(x -> length(x) == n, s)
+        for num_samples in [1, 15]
+            for sample_type in keys(ViennaRNA.Private.SAMPLE_STRUCTURES_SAMPLE_TYPE)
+                s = sample_structures(input; num_samples, sample_type)
+                @test length(s) == num_samples
+                @test all(x -> length(x) == n, s)
+            end
+        end
+        @test_throws ArgumentError sample_structures(input; num_samples=-1)
+        @test_throws ArgumentError sample_structures(input; sample_type=:unknown_sample_type)
+    end
+
 end
 
 @testset "mea" begin
@@ -370,7 +380,7 @@ end
     test_plot_xy(s, x, y)
     x, y = plot_coords(pt)
     test_plot_xy(pt, x, y)
-    for plot_type in keys(ViennaRNA.Private.PLOT_TYPE_TO_VRNA)
+    for plot_type in keys(ViennaRNA.Private.PLOT_COORDS_PLOT_TYPE)
         x, y = plot_coords(s; plot_type)
         test_plot_xy(s, x, y)
         x, y = plot_coords(pt; plot_type)

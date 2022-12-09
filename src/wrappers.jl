@@ -13,13 +13,17 @@ const PARAMS_LOADFNS = Dict(
     :DNA_Mathews1999    => LibRNA.vrna_params_load_DNA_Mathews1999,
     :DNA_Mathews2004    => LibRNA.vrna_params_load_DNA_Mathews2004,
 )
-const PLOT_TYPE_TO_VRNA = Dict(
+const PLOT_COORDS_PLOT_TYPE = Dict(
     :default  => LibRNA.VRNA_PLOT_TYPE_DEFAULT,
     :simple   => LibRNA.VRNA_PLOT_TYPE_SIMPLE,
     :naview   => LibRNA.VRNA_PLOT_TYPE_NAVIEW,
     :circular => LibRNA.VRNA_PLOT_TYPE_CIRCULAR,
     :turtle   => LibRNA.VRNA_PLOT_TYPE_TURTLE,
     :puzzler  => LibRNA.VRNA_PLOT_TYPE_PUZZLER,
+)
+const SAMPLE_STRUCTURES_SAMPLE_TYPE = Dict(
+    :default      => LibRNA.VRNA_PBACKTRACK_DEFAULT,
+    :nonredundant => LibRNA.VRNA_PBACKTRACK_NON_REDUNDANT,
 )
 
 end # module Private
@@ -576,19 +580,26 @@ end
 # stochastic backtrack
 
 """
-    sample_structures(fc; [num_samples=1])
-    sample_structures(sequence; [num_samples=1])
+    sample_structures(fc; [num_samples, sample_type])
+    sample_structures(sequence; [num_samples, sample_type])
 
 Sample `num_samples` secondary structures according to their Boltzmann
-probabilities.
+probabilities.  The valid options for `sample_type` are
+$(keys(Private.SAMPLE_STRUCTURES_SAMPLE_TYPE)).
 """
 function sample_structures(fc::FoldCompound;
                            num_samples::Integer=10,
-                           options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
+                           sample_type=:default)
+    num_samples ≥ 0 || throw(ArgumentError("num_samples must be ≥ 0"))
     fc.has_exp_matrices ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
     fc.uniq_ML ||
         throw(ArgumentError("must have fc.uniq_ML == true"))
+    if !haskey(Private.SAMPLE_STRUCTURES_SAMPLE_TYPE, sample_type)
+        throw(ArgumentError("unknown sample_type :$sample_type, valid options are " *
+            "$(keys(Private.SAMPLE_STRUCTURES_SAMPLE_TYPE))"))
+    end
+    options = Private.SAMPLE_STRUCTURES_SAMPLE_TYPE[sample_type]
     s = LibRNA.vrna_pbacktrack_num(fc.ptr, num_samples, options)
     samples = String[]
     s == C_NULL && return samples
@@ -601,12 +612,14 @@ function sample_structures(fc::FoldCompound;
     return samples
 end
 
-function sample_structures(sequence::AbstractString; num_samples::Integer=10,
-                           options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
+function sample_structures(sequence::AbstractString; kwargs...)
     fc = FoldCompound(sequence; uniq_ML=true)
     partfn(fc)
-    res = sample_structures(fc; num_samples, options)
-    finalize(fc)
+    res = try
+        sample_structures(fc; kwargs...)
+    finally
+        finalize(fc)
+    end
     return res
 end
 
@@ -812,7 +825,8 @@ end
 
 Plots a secondary structure, returning the coordinates. The optional
 `plot_type` parameter can be one of
-$(keys(Private.PLOT_TYPE_TO_VRNA)), with the default being `:default`.
+$(keys(Private.PLOT_COORDS_PLOT_TYPE)), with the default being
+`:default`.
 """
 function plot_coords(structure::Union{AbstractString,Pairtable};
                      plot_type::Symbol = :default)
@@ -824,11 +838,11 @@ function plot_coords(structure::Union{AbstractString,Pairtable};
     if length(structure) == 0
         return Float32[], Float32[]
     end
-    if !haskey(Private.PLOT_TYPE_TO_VRNA, plot_type)
+    if !haskey(Private.PLOT_COORDS_PLOT_TYPE, plot_type)
         throw(ArgumentError("unknown plot_type $plot_type, options are: " *
-            "$(keys(Private.PLOT_TYPE_TO_VRNA))"))
+            "$(keys(Private.PLOT_COORDS_PLOT_TYPE))"))
     end
-    type = Private.PLOT_TYPE_TO_VRNA[plot_type]
+    type = Private.PLOT_COORDS_PLOT_TYPE[plot_type]
 
     ptr_cx = Ptr{Ptr{Cfloat}}(LibRNA.vrna_alloc(sizeof(Ptr{Cfloat})))
     ptr_cy = Ptr{Ptr{Cfloat}}(LibRNA.vrna_alloc(sizeof(Ptr{Cfloat})))
