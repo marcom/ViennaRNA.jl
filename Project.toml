@@ -6,7 +6,6 @@ version = "0.8.1"
 [deps]
 CEnum = "fa961155-64e5-5f13-b03f-caf6b980ea82"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 UnsafePointers = "e17b2a0c-0bdf-430a-bd0c-3a23cae4ff39"
 ViennaRNA_jll = "b7a990de-7fa3-5a2e-8a39-d875e4dafecd"
@@ -17,3 +16,9 @@ Unitful = "1.9"
 UnsafePointers = "1"
 ViennaRNA_jll = "= 2.5.1"
 julia = "1.6"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
