@@ -15,7 +15,7 @@ export bp_distance, bpp, centroid, energy, ensemble_defect,
     tree_edit_dist
 
 # additional utility functions
-export basepairs, plot_structure, prob_of_basepairs
+export basepairs, prob_of_basepairs
 
 # generated C bidings for libRNA from ViennaRNA
 # see src/gen/generator.jl
