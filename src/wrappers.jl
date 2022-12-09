@@ -13,6 +13,14 @@ const PARAMS_LOADFNS = Dict(
     :DNA_Mathews1999    => LibRNA.vrna_params_load_DNA_Mathews1999,
     :DNA_Mathews2004    => LibRNA.vrna_params_load_DNA_Mathews2004,
 )
+const PLOT_TYPE_TO_VRNA = Dict(
+    :default  => LibRNA.VRNA_PLOT_TYPE_DEFAULT,
+    :simple   => LibRNA.VRNA_PLOT_TYPE_SIMPLE,
+    :naview   => LibRNA.VRNA_PLOT_TYPE_NAVIEW,
+    :circular => LibRNA.VRNA_PLOT_TYPE_CIRCULAR,
+    :turtle   => LibRNA.VRNA_PLOT_TYPE_TURTLE,
+    :puzzler  => LibRNA.VRNA_PLOT_TYPE_PUZZLER,
+)
 
 end # module Private
 import .Private
@@ -817,18 +825,11 @@ function plot_coords(structure::Union{AbstractString,Pairtable};
     if length(structure) == 0
         return Float32[], Float32[]
     end
-    map_plot_type = Dict(
-        :default  => LibRNA.VRNA_PLOT_TYPE_DEFAULT,
-        :simple   => LibRNA.VRNA_PLOT_TYPE_SIMPLE,
-        :naview   => LibRNA.VRNA_PLOT_TYPE_NAVIEW,
-        :circular => LibRNA.VRNA_PLOT_TYPE_CIRCULAR,
-        :turtle   => LibRNA.VRNA_PLOT_TYPE_TURTLE,
-        :puzzler  => LibRNA.VRNA_PLOT_TYPE_PUZZLER,
-    )
-    if !haskey(map_plot_type, plot_type)
-        throw(ArgumentError("unknown plot_type $plot_type, options are: $(keys(map_plot_type))"))
+    if !haskey(Private.PLOT_TYPE_TO_VRNA, plot_type)
+        throw(ArgumentError("unknown plot_type $plot_type, options are: " *
+            "$(keys(Private.PLOT_TYPE_TO_VRNA))"))
     end
-    type = map_plot_type[plot_type]
+    type = Private.PLOT_TYPE_TO_VRNA[plot_type]
 
     ptr_cx = Ptr{Ptr{Cfloat}}(LibRNA.vrna_alloc(sizeof(Ptr{Cfloat})))
     ptr_cy = Ptr{Ptr{Cfloat}}(LibRNA.vrna_alloc(sizeof(Ptr{Cfloat})))
