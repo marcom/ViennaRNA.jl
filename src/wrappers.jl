@@ -811,9 +811,8 @@ end
     plot_coords(structure; [plot_type])
 
 Plots a secondary structure, returning the coordinates. The optional
-`plot_type` parameter can be `:default`, `:simple`, `:naview`,
-`:circular`, `:turtle`, or `:puzzler`, with the default being
-`:default`.
+`plot_type` parameter can be one of
+$(keys(Private.PLOT_TYPE_TO_VRNA)), with the default being `:default`.
 """
 function plot_coords(structure::Union{AbstractString,Pairtable};
                      plot_type::Symbol = :default)
