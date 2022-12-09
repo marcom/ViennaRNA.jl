@@ -337,6 +337,15 @@ function Base.setindex!(pt::Pairtable, val, i)
     unsafe_store!(pt.ptr, val, i + 1)
 end
 
+# basic functionality
+
+"""
+    init_rand_seed(seed::Integer)
+
+Seed the random number generator used by ViennaRNA with the value
+`seed`.
+"""
+init_rand_seed(seed::Integer) = LibRNA.vrna_init_rand_seed(seed)
 
 # secondary structure distance measures
 

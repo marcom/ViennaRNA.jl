@@ -2,6 +2,9 @@
 
 ## 0.9.0
 
+- added `ViennaRNA.init_rand_seed(seedval)` to seed the random
+  number generator used by ViennaRNA
+
 - rename `pbacktrack` to `sample_structures`, the same name used in
   RNAstructure.jl and LinearFold.jl
 

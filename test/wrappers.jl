@@ -168,6 +168,10 @@ end
     @test Set(basepairs(Pairtable("(((...)))"))) == Set([(1,9), (2,8), (3,7)])
 end
 
+@testset "init_rand_seed" begin
+    @test ViennaRNA.init_rand_seed(42) === nothing
+end
+
 @testset "bp_distance" begin
     showtestset()
     @test bp_distance("((..))", "(....)") == 1
