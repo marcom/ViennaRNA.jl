@@ -408,7 +408,9 @@ end
     Tincrement = 1u"°C"
     mpoints = 2
     # TODO: this range call doesn't work without ustrip
-    n = length(range(start=ustrip(Tmin), stop=ustrip(Tmax), step=ustrip(Tincrement)))
+    n = length(range(ustrip(Tmin), ustrip(Tmax); step=ustrip(Tincrement)))
+    # TODO: use this once using julia-1.8 or above
+    #n = length(range(start=ustrip(Tmin), stop=ustrip(Tmax), step=ustrip(Tincrement)))
 
     hcs = heat_capacity(fc, Tmin, Tmax, Tincrement; mpoints)
     @test hcs isa Vector{Tuple{typeof(1.0f0u"°C"),typeof(1.0f0u"kcal/mol/K")}}
