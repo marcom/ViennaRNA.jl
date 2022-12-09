@@ -803,10 +803,12 @@ end
     plot_coords(structure; [plot_type])
 
 Plots a secondary structure, returning the coordinates. The optional
-`plot_type` parameter can be `:simple`, `:naview`, `:circular`,
-`:turtle`, or `:puzzler`, with the default being `:naview`.
+`plot_type` parameter can be `:default`, `:simple`, `:naview`,
+`:circular`, `:turtle`, or `:puzzler`, with the default being
+`:default`.
 """
-function plot_coords(structure; plot_type::Symbol=:simple)
+function plot_coords(structure::Union{AbstractString,Pairtable};
+                     plot_type::Symbol = :default)
     _vrna_plot_coords(structure::AbstractString, cx, cy, type) =
         LibRNA.vrna_plot_coords(structure, cx, cy, type)
     _vrna_plot_coords(structure::Pairtable, cx, cy, type) =
@@ -815,20 +817,19 @@ function plot_coords(structure; plot_type::Symbol=:simple)
     if length(structure) == 0
         return Float32[], Float32[]
     end
-    if plot_type === :simple
-        type = LibRNA.VRNA_PLOT_TYPE_SIMPLE
-    elseif plot_type === :naview
-        type = LibRNA.VRNA_PLOT_TYPE_NAVIEW
-    elseif plot_type === :circular
-        type = LibRNA.VRNA_PLOT_TYPE_CIRCULAR
-    elseif plot_type === :turtle
-        type = LibRNA.VRNA_PLOT_TYPE_TURTLE
-    elseif plot_type === :puzzler
-        type = LibRNA.VRNA_PLOT_TYPE_PUZZLER
-    else
-        throw(ArgumentError("unknown plot_type $plot_type, options are:" *
-                            " :simple, :naview, :circular, :turtle, :puzzler"))
+    map_plot_type = Dict(
+        :default  => LibRNA.VRNA_PLOT_TYPE_DEFAULT,
+        :simple   => LibRNA.VRNA_PLOT_TYPE_SIMPLE,
+        :naview   => LibRNA.VRNA_PLOT_TYPE_NAVIEW,
+        :circular => LibRNA.VRNA_PLOT_TYPE_CIRCULAR,
+        :turtle   => LibRNA.VRNA_PLOT_TYPE_TURTLE,
+        :puzzler  => LibRNA.VRNA_PLOT_TYPE_PUZZLER,
+    )
+    if !haskey(map_plot_type, plot_type)
+        throw(ArgumentError("unknown plot_type $plot_type, options are: $(keys(map_plot_type))"))
     end
+    type = map_plot_type[plot_type]
+
     ptr_cx = Ptr{Ptr{Cfloat}}(LibRNA.vrna_alloc(sizeof(Ptr{Cfloat})))
     ptr_cy = Ptr{Ptr{Cfloat}}(LibRNA.vrna_alloc(sizeof(Ptr{Cfloat})))
     n = _vrna_plot_coords(structure, ptr_cx, ptr_cy, type)

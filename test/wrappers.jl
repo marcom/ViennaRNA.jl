@@ -370,7 +370,7 @@ end
     test_plot_xy(s, x, y)
     x, y = plot_coords(pt)
     test_plot_xy(pt, x, y)
-    for plot_type in (:simple, :naview, :circular, :turtle, :puzzler)
+    for plot_type in (:default, :simple, :naview, :circular, :turtle, :puzzler)
         x, y = plot_coords(s; plot_type)
         test_plot_xy(s, x, y)
         x, y = plot_coords(pt; plot_type)
