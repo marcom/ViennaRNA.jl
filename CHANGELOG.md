@@ -5,7 +5,10 @@
 - rename `pbacktrack` to `sample_structures`, the same name used
   in RNAstructure.jl and LinearFold.jl
 
-- plot_coords
+- `sample_structures` (formerly known as `pbacktrack`)
+  - the `num_samples` kwarg now defaults to 10 (previously: 1)
+
+- `plot_coords`
   - restrict input types to `Union{AbstractString,Pairtable}`
   - new `:default` plot type that uses ViennaRNA's default plot
     type, which currently is 'puzzler'. This means the default plot
