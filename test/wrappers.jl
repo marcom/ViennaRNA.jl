@@ -283,14 +283,14 @@ end
         @test length(s) == 10  # default num_samples
         @test all(x -> length(x) == n, s)
         for num_samples in [1, 15]
-            for sample_type in keys(ViennaRNA.Private.SAMPLE_STRUCTURES_SAMPLE_TYPE)
-                s = sample_structures(input; num_samples, sample_type)
+            for options in keys(ViennaRNA.Private.SAMPLE_STRUCTURES_OPTIONS)
+                s = sample_structures(input; num_samples, options)
                 @test length(s) == num_samples
                 @test all(x -> length(x) == n, s)
             end
         end
         @test_throws ArgumentError sample_structures(input; num_samples=-1)
-        @test_throws ArgumentError sample_structures(input; sample_type=:unknown_sample_type)
+        @test_throws ArgumentError sample_structures(input; options=:unknown_option)
     end
 
 end

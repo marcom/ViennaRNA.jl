@@ -21,7 +21,7 @@ const PLOT_COORDS_PLOT_TYPE = Dict(
     :turtle   => LibRNA.VRNA_PLOT_TYPE_TURTLE,
     :puzzler  => LibRNA.VRNA_PLOT_TYPE_PUZZLER,
 )
-const SAMPLE_STRUCTURES_SAMPLE_TYPE = Dict(
+const SAMPLE_STRUCTURES_OPTIONS = Dict(
     :default      => LibRNA.VRNA_PBACKTRACK_DEFAULT,
     :nonredundant => LibRNA.VRNA_PBACKTRACK_NON_REDUNDANT,
 )
@@ -580,27 +580,27 @@ end
 # stochastic backtrack
 
 """
-    sample_structures(fc; [num_samples, sample_type])
-    sample_structures(sequence; [num_samples, sample_type])
+    sample_structures(fc; [num_samples, options])
+    sample_structures(sequence; [num_samples, options])
 
 Sample `num_samples` secondary structures according to their Boltzmann
-probabilities.  The valid options for `sample_type` are
-$(keys(Private.SAMPLE_STRUCTURES_SAMPLE_TYPE)).
+probabilities.  Possible values for `options` are
+$(keys(Private.SAMPLE_STRUCTURES_OPTIONS)).
 """
 function sample_structures(fc::FoldCompound;
                            num_samples::Integer=10,
-                           sample_type=:default)
+                           options::Symbol=:default)
     num_samples ≥ 0 || throw(ArgumentError("num_samples must be ≥ 0"))
     fc.has_exp_matrices ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
     fc.uniq_ML ||
         throw(ArgumentError("must have fc.uniq_ML == true"))
-    if !haskey(Private.SAMPLE_STRUCTURES_SAMPLE_TYPE, sample_type)
-        throw(ArgumentError("unknown sample_type :$sample_type, valid options are " *
-            "$(keys(Private.SAMPLE_STRUCTURES_SAMPLE_TYPE))"))
+    if !haskey(Private.SAMPLE_STRUCTURES_OPTIONS, options)
+        throw(ArgumentError("unknown option: $options, possible values are " *
+            "$(keys(Private.SAMPLE_STRUCTURES_OPTIONS))"))
     end
-    options = Private.SAMPLE_STRUCTURES_SAMPLE_TYPE[sample_type]
-    s = LibRNA.vrna_pbacktrack_num(fc.ptr, num_samples, options)
+    vrna_options = Private.SAMPLE_STRUCTURES_OPTIONS[options]
+    s = LibRNA.vrna_pbacktrack_num(fc.ptr, num_samples, vrna_options)
     samples = String[]
     s == C_NULL && return samples
     i = 1
@@ -612,11 +612,13 @@ function sample_structures(fc::FoldCompound;
     return samples
 end
 
-function sample_structures(sequence::AbstractString; kwargs...)
+function sample_structures(sequence::AbstractString;
+                           num_samples::Integer=10,
+                           options::Symbol=:default)
     fc = FoldCompound(sequence; uniq_ML=true)
     partfn(fc)
     res = try
-        sample_structures(fc; kwargs...)
+        sample_structures(fc; num_samples, options)
     finally
         finalize(fc)
     end

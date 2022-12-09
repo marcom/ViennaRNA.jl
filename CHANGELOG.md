@@ -6,7 +6,9 @@
   RNAstructure.jl and LinearFold.jl
 
 - `sample_structures` (formerly known as `pbacktrack`)
-  - the `num_samples` kwarg now defaults to 10 (previously: 1)
+  - kwarg `num_samples` now defaults to 10 (previously: 1)
+  - kwarg `options` must now be a `Symbol`, currently either `:default`
+    or `:nonredundant`
 
 - `plot_coords`
   - restrict input types to `Union{AbstractString,Pairtable}`
