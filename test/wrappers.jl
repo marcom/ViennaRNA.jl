@@ -370,14 +370,14 @@ end
     test_plot_xy(s, x, y)
     x, y = plot_coords(pt)
     test_plot_xy(pt, x, y)
-    for plot_type in (:default, :simple, :naview, :circular, :turtle, :puzzler)
+    for plot_type in keys(ViennaRNA.Private.PLOT_TYPE_TO_VRNA)
         x, y = plot_coords(s; plot_type)
         test_plot_xy(s, x, y)
         x, y = plot_coords(pt; plot_type)
         test_plot_xy(pt, x, y)
     end
-    @test_throws ArgumentError x, y = plot_coords(s; plot_type = :unknown)
-    @test_throws ArgumentError x, y = plot_coords(pt; plot_type = :unknown)
+    @test_throws ArgumentError x, y = plot_coords(s; plot_type = :unknown_plot_type)
+    @test_throws ArgumentError x, y = plot_coords(pt; plot_type = :unknown_plot_type)
     # zero-sized inputs
     x, y = plot_coords("")
     test_plot_xy("", x, y)
