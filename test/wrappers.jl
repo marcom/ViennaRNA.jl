@@ -271,17 +271,17 @@ end
     @test size(p) == (n,n)
 end
 
-@testset "pbacktrack" begin
+@testset "sample_structures" begin
     showtestset()
     seq = "GGGGGAAAAACCCCCCCCAUUCA"
     fc = FoldCompound(seq; uniq_ML=true)
     partfn(fc)
-    @test length(pbacktrack(fc)) == 1
-    @test length(pbacktrack(seq)) == 1
-    s = pbacktrack(fc; num_samples=10)
+    @test length(sample_structures(fc)) == 1
+    @test length(sample_structures(seq)) == 1
+    s = sample_structures(fc; num_samples=10)
     @test length(s) == 10
-    s = pbacktrack(fc; num_samples=5,
-                   options=ViennaRNA.LibRNA.VRNA_PBACKTRACK_NON_REDUNDANT)
+    s = sample_structures(fc; num_samples=5,
+                          options=ViennaRNA.LibRNA.VRNA_PBACKTRACK_NON_REDUNDANT)
     @test length(s) == 5
 end
 

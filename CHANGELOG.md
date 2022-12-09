@@ -2,6 +2,9 @@
 
 ## 0.9.0
 
+- rename `pbacktrack` to `sample_structures`, the same name used
+  in RNAstructure.jl and LinearFold.jl
+
 - plot_coords: restrict input types, new `:default` plot type that
   uses ViennaRNA's default plot type
 

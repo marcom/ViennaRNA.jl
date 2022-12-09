@@ -59,7 +59,7 @@ Model details (additional keyword arguments):
 - `special_hairpins`: use special hairpin energies for certain tri-,
   tetra- and hexloops. Default is `true`.
 - `uniq_ML`: use unique decomposition for multiloops, needed for
-  `pbacktrack` and `subopt`. Default is `false`.
+  `sample_structures` and `subopt`. Default is `false`.
 """
 mutable struct FoldCompound
     ptr         :: Ptr{LibRNA.vrna_fc_s}
@@ -568,15 +568,15 @@ end
 # stochastic backtrack
 
 """
-    pbacktrack(fc; [num_samples=1])
-    pbacktrack(sequence; [num_samples=1])
+    sample_structures(fc; [num_samples=1])
+    sample_structures(sequence; [num_samples=1])
 
 Sample `num_samples` secondary structures according to their Boltzmann
 probabilities.
 """
-function pbacktrack(fc::FoldCompound;
-                    num_samples::Integer=1,
-                    options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
+function sample_structures(fc::FoldCompound;
+                           num_samples::Integer=1,
+                           options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
     fc.has_exp_matrices ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
     fc.uniq_ML ||
@@ -593,11 +593,11 @@ function pbacktrack(fc::FoldCompound;
     return samples
 end
 
-function pbacktrack(sequence::AbstractString; num_samples::Integer=1,
-                    options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
+function sample_structures(sequence::AbstractString; num_samples::Integer=1,
+                           options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
     fc = FoldCompound(sequence; uniq_ML=true)
     partfn(fc)
-    res = pbacktrack(fc; num_samples, options)
+    res = sample_structures(fc; num_samples, options)
     finalize(fc)
     return res
 end
