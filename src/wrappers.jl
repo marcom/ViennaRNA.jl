@@ -575,7 +575,7 @@ Sample `num_samples` secondary structures according to their Boltzmann
 probabilities.
 """
 function sample_structures(fc::FoldCompound;
-                           num_samples::Integer=1,
+                           num_samples::Integer=10,
                            options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
     fc.has_exp_matrices ||
         throw(ArgumentError("must call ViennaRNA.partfn(::FoldCompound) first"))
@@ -593,7 +593,7 @@ function sample_structures(fc::FoldCompound;
     return samples
 end
 
-function sample_structures(sequence::AbstractString; num_samples::Integer=1,
+function sample_structures(sequence::AbstractString; num_samples::Integer=10,
                            options::Integer=LibRNA.VRNA_PBACKTRACK_DEFAULT)
     fc = FoldCompound(sequence; uniq_ML=true)
     partfn(fc)

@@ -276,10 +276,10 @@ end
     seq = "GGGGGAAAAACCCCCCCCAUUCA"
     fc = FoldCompound(seq; uniq_ML=true)
     partfn(fc)
-    @test length(sample_structures(fc)) == 1
-    @test length(sample_structures(seq)) == 1
-    s = sample_structures(fc; num_samples=10)
-    @test length(s) == 10
+    @test length(sample_structures(fc)) == 10
+    @test length(sample_structures(seq)) == 10
+    s = sample_structures(fc; num_samples=20)
+    @test length(s) == 20
     s = sample_structures(fc; num_samples=5,
                           options=ViennaRNA.LibRNA.VRNA_PBACKTRACK_NON_REDUNDANT)
     @test length(s) == 5
