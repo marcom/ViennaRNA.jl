@@ -5,8 +5,11 @@
 - rename `pbacktrack` to `sample_structures`, the same name used
   in RNAstructure.jl and LinearFold.jl
 
-- plot_coords: restrict input types, new `:default` plot type that
-  uses ViennaRNA's default plot type
+- plot_coords
+  - restrict input types to `Union{AbstractString,Pairtable}`
+  - new `:default` plot type that uses ViennaRNA's default plot
+    type, which currently is 'puzzler'. This means the default plot
+    type of plot_coords has changed from `:simple` to `:puzzler`
 
 - regenerated lib/LibRNA.jl with gen/generator.jl
     - now with ViennaRNA_jll 2.5.1 and not 2.5.0 (this was a mistake in 0.8.x,
