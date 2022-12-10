@@ -30,6 +30,7 @@ end # module Private
 import .Private
 
 
+# TODO: document `options` kwarg, flags that can be bitwise-or'ed
 # TODO: in docstring, use $(LibRNA.VRNA_MODEL_DEFAULT_GQUAD) string
 #       interpolation here instead of hardcoding defaults
 """
@@ -62,6 +63,9 @@ Model details (additional keyword arguments):
   `false`.
 - `log_ML`: use logarithmic energy model for multiloops. Default is
   `false`.
+- `max_bp_span`: maximum number of bases over which a basepair can
+  span. Default value is
+  `$(Int(LibRNA.VRNA_MODEL_DEFAULT_WINDOW_SIZE))`.
 - `min_loop_length`: the minimum size of a loop (without the closing
    base pair). Default is `3`.
 - `no_GU_basepairs`: disallow G-U basepairs. Default is `false`.
@@ -72,6 +76,11 @@ Model details (additional keyword arguments):
   tetra- and hexloops. Default is `true`.
 - `uniq_ML`: use unique decomposition for multiloops, needed for
   `sample_structures` and `subopt`. Default is `false`.
+- `window_size`: window size to be used for local calculations
+  performed in a window moving over the sequence. This value is
+  ignored unless the `LibRNA.VRNA_OPTION_WINDOW` flag is set for
+  `options`. The default value for `window_size` is
+  `$(Int(LibRNA.VRNA_MODEL_DEFAULT_WINDOW_SIZE))`.
 """
 mutable struct FoldCompound
     ptr         :: Ptr{LibRNA.vrna_fc_s}
