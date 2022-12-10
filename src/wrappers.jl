@@ -90,18 +90,16 @@ mutable struct FoldCompound
                           dangles::Int=Int(LibRNA.VRNA_MODEL_DEFAULT_DANGLES),
                           gquadruplex::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_GQUAD),
                           log_ML::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_LOG_ML),
+                          max_bp_span::Int=Int(LibRNA.VRNA_MODEL_DEFAULT_MAX_BP_SPAN),
                           min_loop_size::Int=Int(LibRNA.TURN),
                           no_GU_basepairs::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_NO_GU),
                           no_GU_closure::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_NO_GU_CLOSURE),
                           no_lonely_pairs::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_NO_LP),
                           special_hairpins::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_SPECIAL_HP),
-                          uniq_ML::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_UNIQ_ML))
-        if dangles < 0 || dangles > 3
-            throw(ArgumentError("dangles must be 0, 1, 2, or 3"))
-        end
-        if min_loop_size < 0
-            throw(ArgumentError("min_loop_size must be >= 0"))
-        end
+                          uniq_ML::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_UNIQ_ML),
+                          window_size::Int=Int(LibRNA.VRNA_MODEL_DEFAULT_WINDOW_SIZE))
+        (dangles ∈ (0, 1, 2, 3)) || throw(ArgumentError("dangles must be 0, 1, 2, or 3"))
+        min_loop_size ≥ 0 || throw(ArgumentError("min_loop_size must be ≥ 0"))
         if length(msa) > 1
             firstlen = length(first(msa))
             if any(s -> length(s) != firstlen, msa)
@@ -127,12 +125,14 @@ mutable struct FoldCompound
         LibRNA.vrna_md_defaults_dangles(dangles)
         LibRNA.vrna_md_defaults_gquad(Int(gquadruplex))
         LibRNA.vrna_md_defaults_logML(Int(log_ML))
+        LibRNA.vrna_md_defaults_max_bp_span(max_bp_span)
         LibRNA.vrna_md_defaults_min_loop_size(min_loop_size)
         LibRNA.vrna_md_defaults_noGU(Int(no_GU_basepairs))
         LibRNA.vrna_md_defaults_noGUclosure(Int(no_GU_closure))
         LibRNA.vrna_md_defaults_noLP(Int(no_lonely_pairs))
         LibRNA.vrna_md_defaults_special_hp(Int(special_hairpins))
         LibRNA.vrna_md_defaults_uniq_ML(Int(uniq_ML))
+        LibRNA.vrna_md_defaults_window_size(window_size)
 
         ptr = if length(msa) == 1
             LibRNA.vrna_fold_compound(first(msa), model_details, options)
@@ -157,6 +157,10 @@ Base.length(fc::FoldCompound) = sum(size(fc))
 Base.size(fc::FoldCompound) = ntuple(i -> length(first(fc.msa_strands)[i]), fc.nstrands)
 
 function Base.getproperty(fc::FoldCompound, sym::Symbol)
+    # TODO: simplify this big if statement? but want to make sure the
+    # Julia compiler can still constant-propagate through the desired
+    # symbol (`sym` is a constant for most calls from the POV of the
+    # caller of getproperty)
     if sym == :circular
         return Bool(fc.uptr.params[].model_details.circ[])
     elseif sym == :dangles
@@ -169,6 +173,8 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         fc.uptr.exp_matrices[] != C_NULL
     elseif sym == :log_ML
         return Bool(fc.uptr.params[].model_details.logML[])
+    elseif sym == :max_bp_span
+        return Int(fc.uptr.params[].model_details.max_bp_span[])
     elseif sym == :min_loop_size
         return Int(fc.uptr.params[].model_details.min_loop_size[])
     elseif sym == :no_GU_basepairs
@@ -192,6 +198,8 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         return par_temperature * Private.unit_temperature
     elseif sym == :uniq_ML
         return Bool(fc.uptr.params[].model_details.uniq_ML[])
+    elseif sym == :window_size
+        return Int(fc.uptr.params[].model_details.window_size[])
     # matrices_{c,fML,fM1,f5,f3,fM2,Fc,FcH,FcI,FcM}
     elseif startswith(String(sym), "matrices_")
         fc.has_matrices || begin
@@ -239,10 +247,11 @@ end
 
 Base.propertynames(fc::FoldCompound) =
     (fieldnames(typeof(fc))...,
-     :circular, :dangles, :gquadruplex, :has_matrices, :has_exp_matrices,
-     :log_ML, :min_loop_size, :no_GU_basepairs, :no_GU_closure,
-     :no_lonely_pairs, :nstrands, :params_name, :special_hairpins,
-     :temperature, :uniq_ML,
+     :circular, :dangles, :gquadruplex, :has_matrices,
+     :has_exp_matrices, :log_ML, :max_bp_span, :min_loop_size,
+     :no_GU_basepairs, :no_GU_closure, :no_lonely_pairs, :nstrands,
+     :params_name, :special_hairpins, :temperature, :uniq_ML,
+     :window_size,
      :matrices_c, :matrices_fML, :matrices_fM1,
      :matrices_f5, :matrices_f3, :matrices_fM2,
      :matrices_Fc, :matrices_FcH, :matrices_FcI, :matrices_FcM,
@@ -259,8 +268,8 @@ function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     println(io, "  params      : $(fc.params_name)")
     println(io, "  temperature : $(fc.temperature)")
     println(io, "  options     : circular=$(fc.circular), dangles=$(fc.dangles), gquadruplex=$(fc.gquadruplex), log_ML=$(fc.log_ML),")
-    println(io, "                min_loop_size=$(fc.min_loop_size), no_GU_basepairs=$(fc.no_GU_basepairs), no_GU_closure=$(fc.no_GU_closure),")
-    println(io, "                no_lonely_pairs=$(fc.no_lonely_pairs), special_hairpins=$(fc.special_hairpins), uniq_ML=$(fc.uniq_ML)")
+    println(io, "                max_bp_span=$(fc.max_bp_span), min_loop_size=$(fc.min_loop_size), no_GU_basepairs=$(fc.no_GU_basepairs), no_GU_closure=$(fc.no_GU_closure),")
+    println(io, "                no_lonely_pairs=$(fc.no_lonely_pairs), special_hairpins=$(fc.special_hairpins), uniq_ML=$(fc.uniq_ML), window_size=$(fc.window_size)")
     if length(fc.msa) == 1
         for (i,s) in enumerate(first(fc.msa_strands))
             println(io,   "  strand $i    : $(s)")

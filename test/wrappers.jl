@@ -18,6 +18,7 @@ using Unitful
         @test fc.gquadruplex      == LibRNA.VRNA_MODEL_DEFAULT_GQUAD
         @test fc.has_exp_matrices == false
         @test fc.log_ML           == LibRNA.VRNA_MODEL_DEFAULT_LOG_ML
+        @test fc.max_bp_span      == length(fc)  # ≠ LibRNA.VRNA_MODEL_DEFAULT_MAX_BP_SPAN == -1
         @test fc.min_loop_size    == LibRNA.TURN
         @test fc.no_GU_basepairs  == LibRNA.VRNA_MODEL_DEFAULT_NO_GU
         @test fc.no_GU_closure    == LibRNA.VRNA_MODEL_DEFAULT_NO_GU_CLOSURE
@@ -27,6 +28,7 @@ using Unitful
         @test fc.special_hairpins == LibRNA.VRNA_MODEL_DEFAULT_SPECIAL_HP
         @test fc.temperature      == 37u"°C"
         @test fc.uniq_ML          == LibRNA.VRNA_MODEL_DEFAULT_UNIQ_ML
+        @test fc.window_size      == length(fc)  # ≠ LibRNA.VRNA_MODEL_DEFAULT_WINDOW_SIZE == -1
 
         # options
         fc = FoldCompound(s; options=ViennaRNA.LibRNA.VRNA_OPTION_MFE)
