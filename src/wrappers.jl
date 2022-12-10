@@ -47,35 +47,40 @@ Input arguments:
    (alifold). A vector of sequences which may contain multiple
    strands, denoted by '&', and gap '-' characters
 - `params`: energy parameter set, possible values are
-  `:RNA_Turner1999`, `:RNA_Turner2004`, `:RNA_Andronescu2007`,
-  `:RNA_Langdon2018`, `:DNA_Mathews1999`, `:DNA_Mathews2004`.  Default
-  is `:RNA_Turner2004`.
+  `$(sort(collect(keys(Private.PARAMS_LOADFNS))))`. Default is
+  `:RNA_Turner2004`.
 - `temperature`: the temperature at which calculations are performed.
   Default is `37u"°C"`.
 
 Model details (additional keyword arguments):
 - `circular`: determines if the RNA strand is circular, i.e. the
-  5'-end and 3'-end are covalently bonded. Default is `false`.
+  5'-end and 3'-end are covalently bonded. Default is
+  `$(Bool(LibRNA.VRNA_MODEL_DEFAULT_CIRC))`.
 - `dangles`: how to treat dangling base pairs in multiloops and the
   exterior loop. Can be 0, 1, 2, or 3. See ViennaRNA docs for
-  details. Default is `2`.
+  details. Default is `$(Int(LibRNA.VRNA_MODEL_DEFAULT_DANGLES))`.
 - `gquadruplex`: allow G-quadruplexes in predictions. Default is
-  `false`.
+  `$(Bool(LibRNA.VRNA_MODEL_DEFAULT_GQUAD))`.
 - `log_ML`: use logarithmic energy model for multiloops. Default is
-  `false`.
+  `$(Bool(LibRNA.VRNA_MODEL_DEFAULT_LOG_ML))`.
 - `max_bp_span`: maximum number of bases over which a basepair can
   span. Default value is
   `$(Int(LibRNA.VRNA_MODEL_DEFAULT_WINDOW_SIZE))`.
 - `min_loop_length`: the minimum size of a loop (without the closing
-   base pair). Default is `3`.
-- `no_GU_basepairs`: disallow G-U basepairs. Default is `false`.
+   base pair). Default is `$(Int(LibRNA.TURN))`.
+- `no_GU_basepairs`: disallow G-U basepairs. Default is
+  `$(Bool(LibRNA.VRNA_MODEL_DEFAULT_NO_GU))`.
 - `no_GU_closure`: disallow G-U basepairs as closing pairs for
-  loops. Default is `false`.
-- `no_lonely_pairs`: disallow isolated base pairs. Default is `false`.
+  loops. Default is
+  `$(Bool(LibRNA.VRNA_MODEL_DEFAULT_NO_GU_CLOSURE))`.
+- `no_lonely_pairs`: disallow isolated base pairs. Default is
+  `$(Bool(LibRNA.VRNA_MODEL_DEFAULT_NO_LP))`.
 - `special_hairpins`: use special hairpin energies for certain tri-,
-  tetra- and hexloops. Default is `true`.
+  tetra- and hexloops. Default is
+  `$(Bool(LibRNA.VRNA_MODEL_DEFAULT_SPECIAL_HP))`.
 - `uniq_ML`: use unique decomposition for multiloops, needed for
-  `sample_structures` and `subopt`. Default is `false`.
+  `sample_structures` and `subopt`. Default is
+  `$(Bool(LibRNA.VRNA_MODEL_DEFAULT_UNIQ_ML))`.
 - `window_size`: window size to be used for local calculations
   performed in a window moving over the sequence. This value is
   ignored unless the `LibRNA.VRNA_OPTION_WINDOW` flag is set for
