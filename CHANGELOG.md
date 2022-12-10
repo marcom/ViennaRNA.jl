@@ -2,6 +2,9 @@
 
 ## 0.9.0
 
+- `FoldCompound`: new properties `max_bp_span` and `window_size` that
+  can be set in constructor
+
 - added `ViennaRNA.init_rand_seed(seedval)` to seed the random
   number generator used by ViennaRNA
 
