@@ -31,8 +31,6 @@ import .Private
 
 
 # TODO: document `options` kwarg, flags that can be bitwise-or'ed
-# TODO: in docstring, use $(LibRNA.VRNA_MODEL_DEFAULT_GQUAD) string
-#       interpolation here instead of hardcoding defaults
 """
     FoldCompound(seq::AbstractString; [params, temperature], [model_details...])
     FoldCompound(msa::Vector{<:AbstractString}; [params, temperature], [model_details...])
