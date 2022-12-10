@@ -28,4 +28,4 @@
     small)
   - always keep the version of ViennaRNA_jll used in gen/ in sync with
     the parent dir by using stacked pkg environments
-
+  - include ViennaRNA `mfe_window.h` and `part_func_window.h` headers

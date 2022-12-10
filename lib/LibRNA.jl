@@ -7805,6 +7805,141 @@ function vrna_backtrack_window(fc, Lfold_filename, file_pos, structure, mfe)
     ccall((:vrna_backtrack_window, libRNA), Cint, (Ptr{vrna_fold_compound_t}, Ptr{Cchar}, Clong, Ptr{Ptr{Cchar}}, Cdouble), fc, Lfold_filename, file_pos, structure, mfe)
 end
 
+# typedef void ( vrna_mfe_window_callback ) ( int start , int end , const char * structure , float en , void * data )
+"""
+ @brief  The default callback for sliding window MFE structure predictions
+
+ @callback
+ @parblock
+ This function will be called for each hit in a sliding window MFE prediction.
+ @endparblock
+ @see vrna_mfe_window()
+
+ @param start provides the first position of the hit (1-based, relative to entire sequence/alignment)
+ @param end provides the last position of the hit (1-based, relative to the entire sequence/alignment)
+ @param structure provides the (sub)structure in dot-bracket notation
+ @param en is the free energy of the structure hit in kcal/mol
+ @param data is some arbitrary data pointer passed through by the function executing the callback
+"""
+const vrna_mfe_window_callback = Cvoid
+
+"""
+    vrna_mfe_window(vc, file)
+
+ @brief Local MFE prediction using a sliding window approach.
+
+ Computes minimum free energy structures using a sliding window
+ approach, where base pairs may not span outside the window.
+ In contrast to vrna_mfe(), where a maximum base pair span
+ may be set using the #vrna_md_t.max_bp_span attribute and one
+ globally optimal structure is predicted, this function uses a
+ sliding window to retrieve all locally optimal structures within
+ each window.
+ The size of the sliding window is set in the #vrna_md_t.window_size
+ attribute, prior to the retrieval of the #vrna_fold_compound_t
+ using vrna_fold_compound() with option #VRNA_OPTION_WINDOW
+
+ The predicted structures are written on-the-fly, either to
+ stdout, if a NULL pointer is passed as file parameter, or to
+ the corresponding filehandle.
+
+ @see  vrna_fold_compound(), vrna_mfe_window_zscore(), vrna_mfe(),
+       vrna_Lfold(), vrna_Lfoldz(),
+       #VRNA_OPTION_WINDOW, #vrna_md_t.max_bp_span, #vrna_md_t.window_size
+
+ @param  vc        The #vrna_fold_compound_t with preallocated memory for the DP matrices
+ @param  file      The output file handle where predictions are written to (maybe NULL)
+### Prototype
+```c
+float vrna_mfe_window(vrna_fold_compound_t *vc, FILE *file);
+```
+"""
+function vrna_mfe_window(vc, file)
+    ccall((:vrna_mfe_window, libRNA), Cfloat, (Ptr{vrna_fold_compound_t}, Ptr{Libc.FILE}), vc, file)
+end
+
+"""
+    vrna_mfe_window_cb(vc, cb, data)
+
+
+### Prototype
+```c
+float vrna_mfe_window_cb(vrna_fold_compound_t *vc, vrna_mfe_window_callback *cb, void *data);
+```
+"""
+function vrna_mfe_window_cb(vc, cb, data)
+    ccall((:vrna_mfe_window_cb, libRNA), Cfloat, (Ptr{vrna_fold_compound_t}, Ptr{Cvoid}, Ptr{Cvoid}), vc, cb, data)
+end
+
+"""
+    vrna_Lfold(string, window_size, file)
+
+ @brief Local MFE prediction using a sliding window approach (simplified interface)
+
+ This simplified interface to vrna_mfe_window() computes the MFE and locally
+ optimal secondary structure using default options. Structures are predicted
+ using a sliding window approach, where base pairs may not span outside the
+ window. Memory required for dynamic programming (DP) matrices will
+ be allocated and free'd on-the-fly. Hence, after return of this function, the recursively filled
+ matrices are not available any more for any post-processing.
+
+ @note In case you want to use the filled DP matrices for any subsequent post-processing step, or
+ you require other conditions than specified by the default model details, use vrna_mfe_window(),
+ and the data structure #vrna_fold_compound_t instead.
+
+ @see  vrna_mfe_window(), vrna_Lfoldz(), vrna_mfe_window_zscore()
+
+ @param  string      The nucleic acid sequence
+ @param  window_size The window size for locally optimal structures
+ @param  file        The output file handle where predictions are written to (if NULL, output is written to stdout)
+### Prototype
+```c
+float vrna_Lfold(const char *string, int window_size, FILE *file);
+```
+"""
+function vrna_Lfold(string, window_size, file)
+    ccall((:vrna_Lfold, libRNA), Cfloat, (Ptr{Cchar}, Cint, Ptr{Libc.FILE}), string, window_size, file)
+end
+
+"""
+    vrna_Lfold_cb(string, window_size, cb, data)
+
+
+### Prototype
+```c
+float vrna_Lfold_cb(const char *string, int window_size, vrna_mfe_window_callback *cb, void *data);
+```
+"""
+function vrna_Lfold_cb(string, window_size, cb, data)
+    ccall((:vrna_Lfold_cb, libRNA), Cfloat, (Ptr{Cchar}, Cint, Ptr{Cvoid}, Ptr{Cvoid}), string, window_size, cb, data)
+end
+
+"""
+    vrna_aliLfold(alignment, maxdist, fp)
+
+
+### Prototype
+```c
+float vrna_aliLfold(const char **alignment, int maxdist, FILE *fp);
+```
+"""
+function vrna_aliLfold(alignment, maxdist, fp)
+    ccall((:vrna_aliLfold, libRNA), Cfloat, (Ptr{Ptr{Cchar}}, Cint, Ptr{Libc.FILE}), alignment, maxdist, fp)
+end
+
+"""
+    vrna_aliLfold_cb(alignment, maxdist, cb, data)
+
+
+### Prototype
+```c
+float vrna_aliLfold_cb(const char **alignment, int maxdist, vrna_mfe_window_callback *cb, void *data);
+```
+"""
+function vrna_aliLfold_cb(alignment, maxdist, cb, data)
+    ccall((:vrna_aliLfold_cb, libRNA), Cfloat, (Ptr{Ptr{Cchar}}, Cint, Ptr{Cvoid}, Ptr{Cvoid}), alignment, maxdist, cb, data)
+end
+
 """
     vrna_params_load(fname, options)
 
@@ -9884,6 +10019,211 @@ function assign_plist_gquad_from_pr(pl, length, cut_off)
     ccall((:assign_plist_gquad_from_pr, libRNA), Cvoid, (Ptr{Ptr{vrna_ep_t}}, Cint, Cdouble), pl, length, cut_off)
 end
 
+# typedef void ( vrna_probs_window_callback ) ( FLT_OR_DBL * pr , int pr_size , int i , int max , unsigned int type , void * data )
+"""
+@brief Sliding window probability computation callback
+
+@callback
+@parblock
+This function will be called for each probability data set in the sliding
+window probability computation implementation of vrna_probs_window().
+The argument @a type specifies the type of probability that is passed to
+this function.
+@endparblock
+
+#### Types: ####
+ * #VRNA_PROBS_WINDOW_BPP  - @copybrief #VRNA_PROBS_WINDOW_BPP
+ * #VRNA_PROBS_WINDOW_UP   - @copybrief #VRNA_PROBS_WINDOW_UP
+ * #VRNA_PROBS_WINDOW_PF   - @copybrief #VRNA_PROBS_WINDOW_PF
+
+The above types usually come exclusively. However, for unpaired
+probabilities, the #VRNA_PROBS_WINDOW_UP flag is OR-ed together
+with one of the loop type contexts
+
+ * #VRNA_EXT_LOOP  - @copybrief #VRNA_EXT_LOOP
+ * #VRNA_HP_LOOP   - @copybrief #VRNA_HP_LOOP
+ * #VRNA_INT_LOOP  - @copybrief #VRNA_INT_LOOP
+ * #VRNA_MB_LOOP   - @copybrief #VRNA_MB_LOOP
+ * #VRNA_ANY_LOOP  - @copybrief #VRNA_ANY_LOOP
+
+to indicate the particular type of data available through the @p pr
+pointer.
+
+@see vrna_probs_window(), vrna_pfl_fold_up_cb()
+
+@param pr      An array of probabilities
+@param pr_size The length of the probability array
+@param i       The i-position (5') of the probabilities
+@param max     The (theoretical) maximum length of the probability array
+@param type    The type of data that is provided
+@param data    Auxiliary data
+"""
+const vrna_probs_window_callback = Cvoid
+
+"""
+    vrna_probs_window(fc, ulength, options, cb, data)
+
+ @brief  Compute various equilibrium probabilities under a sliding window approach
+
+ This function applies a sliding window scan for the sequence provided with the
+ argument @p fc and reports back equilibrium probabilities through the callback
+ function @p cb. The data reported to the callback depends on the @p options flag.
+
+ @note   The parameter @p ulength only affects computation and resulting data if unpaired
+         probability computations are requested through the @p options flag.
+
+ #### Options: ####
+ * #VRNA_PROBS_WINDOW_BPP      - @copybrief #VRNA_PROBS_WINDOW_BPP
+ * #VRNA_PROBS_WINDOW_UP       - @copybrief #VRNA_PROBS_WINDOW_UP
+ * #VRNA_PROBS_WINDOW_UP_SPLIT - @copybrief #VRNA_PROBS_WINDOW_UP_SPLIT
+
+ Options may be OR-ed together
+
+ @see  vrna_pfl_fold_cb(), vrna_pfl_fold_up_cb()
+
+ @param  fc            The fold compound with sequence data, model settings and precomputed energy parameters
+ @param  ulength       The maximal length of an unpaired segment (only for unpaired probability computations)
+ @param  cb            The callback function which collects the pair probability data for further processing
+ @param  data          Some arbitrary data structure that is passed to the callback @p cb
+ @param  options       Option flags to control the behavior of this function
+ @return               0 on failure, non-zero on success
+### Prototype
+```c
+int vrna_probs_window(vrna_fold_compound_t *fc, int ulength, unsigned int options, vrna_probs_window_callback *cb, void *data);
+```
+"""
+function vrna_probs_window(fc, ulength, options, cb, data)
+    ccall((:vrna_probs_window, libRNA), Cint, (Ptr{vrna_fold_compound_t}, Cint, Cuint, Ptr{Cvoid}, Ptr{Cvoid}), fc, ulength, options, cb, data)
+end
+
+"""
+    vrna_pfl_fold(sequence, window_size, max_bp_span, cutoff)
+
+ @brief  Compute base pair probabilities using a sliding-window approach
+
+ This is a simplified wrapper to vrna_probs_window() that given a nucleid acid sequence,
+ a window size, a maximum base pair span, and a cutoff value computes the pair probabilities
+ for any base pair in any window. The pair probabilities are returned as a list and the user
+ has to take care to free() the memory occupied by the list.
+
+ @note This function uses default model settings! For custom model settings, we refer to
+       the function vrna_probs_window().
+
+ @note In case of any computation errors, this function returns @p NULL
+
+ @see    vrna_probs_window(), vrna_pfl_fold_cb(), vrna_pfl_fold_up()
+
+ @param  sequence      The nucleic acid input sequence
+ @param  window_size   The size of the sliding window
+ @param  max_bp_span   The maximum distance along the backbone between two nucleotides that form a base pairs
+ @param  cutoff        A cutoff value that omits all pairs with lower probability
+ @return               A list of base pair probabilities, terminated by an entry with #vrna_ep_t.i and #vrna_ep_t.j set to 0
+### Prototype
+```c
+vrna_ep_t * vrna_pfl_fold(const char *sequence, int window_size, int max_bp_span, float cutoff);
+```
+"""
+function vrna_pfl_fold(sequence, window_size, max_bp_span, cutoff)
+    ccall((:vrna_pfl_fold, libRNA), Ptr{vrna_ep_t}, (Ptr{Cchar}, Cint, Cint, Cfloat), sequence, window_size, max_bp_span, cutoff)
+end
+
+"""
+    vrna_pfl_fold_cb(sequence, window_size, max_bp_span, cb, data)
+
+ @brief  Compute base pair probabilities using a sliding-window approach (callback version)
+
+ This is a simplified wrapper to vrna_probs_window() that given a nucleid acid sequence,
+ a window size, a maximum base pair span, and a cutoff value computes the pair probabilities
+ for any base pair in any window. It is similar to vrna_pfl_fold() but uses a callback mechanism
+ to return the pair probabilities.
+
+ Read the details for vrna_probs_window() for details on the callback implementation!
+
+ @note This function uses default model settings! For custom model settings, we refer to
+       the function vrna_probs_window().
+
+ @see    vrna_probs_window(), vrna_pfl_fold(), vrna_pfl_fold_up_cb()
+
+ @param  sequence      The nucleic acid input sequence
+ @param  window_size   The size of the sliding window
+ @param  max_bp_span   The maximum distance along the backbone between two nucleotides that form a base pairs
+ @param  cb            The callback function which collects the pair probability data for further processing
+ @param  data          Some arbitrary data structure that is passed to the callback @p cb
+ @return               0 on failure, non-zero on success
+### Prototype
+```c
+int vrna_pfl_fold_cb(const char *sequence, int window_size, int max_bp_span, vrna_probs_window_callback *cb, void *data);
+```
+"""
+function vrna_pfl_fold_cb(sequence, window_size, max_bp_span, cb, data)
+    ccall((:vrna_pfl_fold_cb, libRNA), Cint, (Ptr{Cchar}, Cint, Cint, Ptr{Cvoid}, Ptr{Cvoid}), sequence, window_size, max_bp_span, cb, data)
+end
+
+"""
+    vrna_pfl_fold_up(sequence, ulength, window_size, max_bp_span)
+
+ @brief  Compute probability of contiguous unpaired segments
+
+ This is a simplified wrapper to vrna_probs_window() that given a nucleic acid sequence,
+ a maximum length of unpaired segments (@p ulength), a window size, and a maximum base
+ pair span computes the equilibrium probability of any segment not exceeding @p ulength.
+ The probabilities to be unpaired are returned as a 1-based, 2-dimensional matrix with
+ dimensions @f\$ N \\times M @f\$, where @f\$N@f\$ is the length of the sequence and @f\$M@f\$
+ is the maximum segment length. As an example, the probability of a segment of size 5
+ starting at position 100 is stored in the matrix entry @f\$X[100][5]@f\$.
+
+ It is the users responsibility to free the memory occupied by this matrix.
+
+ @note This function uses default model settings! For custom model settings, we refer to
+       the function vrna_probs_window().
+
+ @param  sequence      The nucleic acid input sequence
+ @param  ulength       The maximal length of an unpaired segment
+ @param  window_size   The size of the sliding window
+ @param  max_bp_span   The maximum distance along the backbone between two nucleotides that form a base pairs
+ @return               The probabilities to be unpaired for any segment not exceeding @p ulength
+### Prototype
+```c
+double ** vrna_pfl_fold_up(const char *sequence, int ulength, int window_size, int max_bp_span);
+```
+"""
+function vrna_pfl_fold_up(sequence, ulength, window_size, max_bp_span)
+    ccall((:vrna_pfl_fold_up, libRNA), Ptr{Ptr{Cdouble}}, (Ptr{Cchar}, Cint, Cint, Cint), sequence, ulength, window_size, max_bp_span)
+end
+
+"""
+    vrna_pfl_fold_up_cb(sequence, ulength, window_size, max_bp_span, cb, data)
+
+ @brief  Compute probability of contiguous unpaired segments
+
+ This is a simplified wrapper to vrna_probs_window() that given a nucleic acid sequence,
+ a maximum length of unpaired segments (@p ulength), a window size, and a maximum base
+ pair span computes the equilibrium probability of any segment not exceeding @p ulength.
+ It is similar to vrna_pfl_fold_up() but uses a callback mechanism to return the unpaired
+ probabilities.
+
+ Read the details for vrna_probs_window() for details on the callback implementation!
+
+
+ @note This function uses default model settings! For custom model settings, we refer to
+       the function vrna_probs_window().
+
+ @param  sequence      The nucleic acid input sequence
+ @param  ulength       The maximal length of an unpaired segment
+ @param  window_size   The size of the sliding window
+ @param  max_bp_span   The maximum distance along the backbone between two nucleotides that form a base pairs
+ @param  cb            The callback function which collects the pair probability data for further processing
+ @param  data          Some arbitrary data structure that is passed to the callback @p cb
+ @return               0 on failure, non-zero on success
+### Prototype
+```c
+int vrna_pfl_fold_up_cb(const char *sequence, int ulength, int window_size, int max_bp_span, vrna_probs_window_callback *cb, void *data);
+```
+"""
+function vrna_pfl_fold_up_cb(sequence, ulength, window_size, max_bp_span, cb, data)
+    ccall((:vrna_pfl_fold_up_cb, libRNA), Cint, (Ptr{Cchar}, Cint, Cint, Cint, Ptr{Cvoid}, Ptr{Cvoid}), sequence, ulength, window_size, max_bp_span, cb, data)
+end
+
 struct vrna_plot_layout_s
     length::Cuint
     x::Ptr{Cfloat}
@@ -11559,6 +11899,26 @@ const VRNA_PARAMETER_FORMAT_DEFAULT = 0
 const VRNA_PBACKTRACK_DEFAULT = 0
 
 const VRNA_PBACKTRACK_NON_REDUNDANT = 1
+
+const VRNA_EXT_LOOP = Cuint(1)
+
+const VRNA_HP_LOOP = Cuint(2)
+
+const VRNA_INT_LOOP = Cuint(4)
+
+const VRNA_MB_LOOP = Cuint(8)
+
+const VRNA_ANY_LOOP = ((VRNA_EXT_LOOP | VRNA_HP_LOOP) | VRNA_INT_LOOP) | VRNA_MB_LOOP
+
+const VRNA_PROBS_WINDOW_BPP = Cuint(4096)
+
+const VRNA_PROBS_WINDOW_UP = Cuint(8192)
+
+const VRNA_PROBS_WINDOW_STACKP = Cuint(16384)
+
+const VRNA_PROBS_WINDOW_UP_SPLIT = Cuint(32768)
+
+const VRNA_PROBS_WINDOW_PF = Cuint(65536)
 
 const VRNA_PLOT_TYPE_SIMPLE = 0
 
