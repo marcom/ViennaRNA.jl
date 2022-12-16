@@ -10,7 +10,7 @@ export FoldCompound, Pairtable
 # wrapper functions
 export bp_distance, bpp, centroid, energy, ensemble_defect,
     heat_capacity, inverse_fold, inverse_pf_fold, mea,
-    mean_bp_distance, mfe, neighbors, partfn, plot_coords,
+    mean_bp_distance, mfe, mfe_window, neighbors, partfn, plot_coords,
     prob_of_structure, sample_structures, subopt, subopt_zuker,
     tree_edit_dist
 

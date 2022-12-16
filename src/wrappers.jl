@@ -670,6 +670,58 @@ function mfe(sequence::AbstractString)
     return res
 end
 
+# mfe_window
+
+# callback function has to be defined before mfe_window
+function _callback_mfe_window_save(startidx::Cint, endidx::Cint,
+                                   dbn_ptr::Ptr{Cchar}, en::Cfloat,
+                                   data::Ptr{Cvoid})
+    # from ViennaRNA header: src/ViennaRNA/mfe_window.h
+    #
+    # @param start provides the first position of the hit (1-based, relative to entire sequence/alignment)
+    # @param end provides the last position of the hit (1-based, relative to the entire sequence/alignment)
+    # @param structure provides the (sub)structure in dot-bracket notation
+    # @param en is the free energy of the structure hit in kcal/mol
+    # @param data is some arbitrary data pointer passed through by the function executing the callback
+    T = @NamedTuple{startidx::Int, endidx::Int, dbn::String, en::Float64}
+    res = unsafe_pointer_to_objref(data)::Vector{T}
+    dbn = unsafe_string(dbn_ptr)
+    push!(res, (; startidx, endidx, dbn, en))
+    return nothing
+end
+
+"""
+    mfe_window(fc::FoldCompound) -> Vector of results
+    mfe_window(seq::AbstractString; window_size) -> Vector of results
+
+Run a minimum free energy structure calculation in a sliding
+window. The `FoldCompound` must have the `window_size` and correct
+`options` set to be able to call `mfe_window` on it:
+```
+FoldCompound(seq; window_size, options=ViennaRNA.LibRNA.VRNA_OPTION_WINDOW)
+```
+"""
+function mfe_window(fc::FoldCompound)
+    # TODO: check that fc has options=LibRNA.VRNA_OPTION_WINDOW set
+    #cb_fnptr = fnptr_callback_mfe_window_save
+    cb_fnptr = @cfunction(_callback_mfe_window_save, Cvoid,
+                          (Cint, Cint, Ptr{Cchar}, Cfloat, Ptr{Cvoid}))
+    T = @NamedTuple{startidx::Int, endidx::Int, dbn::String, en::Float64}
+    res = T[]
+    # TODO: is this GC.@preserve needed?
+    GC.@preserve res ViennaRNA.LibRNA.vrna_mfe_window_cb(
+        fc.ptr, cb_fnptr, pointer_from_objref(res)
+    )
+    return res
+end
+
+function mfe_window(seq::AbstractString; window_size::Int)
+    fc = FoldCompound(seq; window_size, options=(LibRNA.VRNA_OPTION_DEFAULT | LibRNA.VRNA_OPTION_WINDOW))
+    res = mfe_window(fc)
+    finalize(fc)
+    return res
+end
+
 # neighbors: move sets
 
 """

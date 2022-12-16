@@ -362,6 +362,20 @@ end
     @test mfe(seq) isa Tuple{String,Unitful.Quantity}
 end
 
+@testset "mfe_window" begin
+    showtestset()
+    Tres = Vector{@NamedTuple{startidx::Int, endidx::Int, dbn::String, en::Float64}}
+    seq = "G"^30 * "A"^3 * "C"^30
+    window_size = 30
+    fc = FoldCompound(seq; window_size, options=LibRNA.VRNA_OPTION_WINDOW)
+    res1 = mfe_window(fc)
+    @test res1 isa Tres
+    @test length(res1) > 0
+    res2 = mfe_window(seq; window_size)
+    @test res2 isa Tres
+    @test res1 == res2
+end
+
 @testset "neighbors" begin
     showtestset()
     fc = FoldCompound("GGGAAACCC")
