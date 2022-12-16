@@ -364,14 +364,30 @@ end
 
 @testset "mfe_window" begin
     showtestset()
-    Tres = Vector{@NamedTuple{startidx::Int, endidx::Int, dbn::String, en::Float64}}
+    Tres = Vector{ViennaRNA.ResultWindowMFE}
     seq = "G"^30 * "A"^3 * "C"^30
     window_size = 30
-    fc = FoldCompound(seq; window_size, options=LibRNA.VRNA_OPTION_WINDOW)
+    fc = FoldCompound(seq; window_size, options=(LibRNA.VRNA_OPTION_MFE | LibRNA.VRNA_OPTION_WINDOW))
     res1 = mfe_window(fc)
     @test res1 isa Tres
     @test length(res1) > 0
     res2 = mfe_window(seq; window_size)
+    @test res2 isa Tres
+    @test res1 == res2
+end
+
+@testset "mfe_window_channel" begin
+    showtestset()
+    Tres = Vector{ViennaRNA.ResultWindowMFE}
+    seq = "G"^30 * "A"^3 * "C"^30
+    window_size = 30
+    fc = FoldCompound(seq; window_size, options=(LibRNA.VRNA_OPTION_MFE | LibRNA.VRNA_OPTION_WINDOW))
+    chan = mfe_window_channel(fc)
+    res1 = collect(chan)
+    @test res1 isa Tres
+    @test length(res1) > 0
+    chan = mfe_window_channel(seq; window_size)
+    res2 = collect(chan)
     @test res2 isa Tres
     @test res1 == res2
 end

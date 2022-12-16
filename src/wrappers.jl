@@ -670,7 +670,13 @@ function mfe(sequence::AbstractString)
     return res
 end
 
-# mfe_window
+# mfe_window: sliding window over sequence
+
+struct ResultWindowMFE
+    seqidx :: UnitRange{Cint}
+    dbn :: String
+    en :: typeof(Private.unit_energy)
+end
 
 # callback function has to be defined before mfe_window
 function _callback_mfe_window_save(startidx::Cint, endidx::Cint,
@@ -683,16 +689,15 @@ function _callback_mfe_window_save(startidx::Cint, endidx::Cint,
     # @param structure provides the (sub)structure in dot-bracket notation
     # @param en is the free energy of the structure hit in kcal/mol
     # @param data is some arbitrary data pointer passed through by the function executing the callback
-    T = @NamedTuple{startidx::Int, endidx::Int, dbn::String, en::Float64}
-    res = unsafe_pointer_to_objref(data)::Vector{T}
+    res = unsafe_pointer_to_objref(data)::Vector{ResultWindowMFE}
     dbn = unsafe_string(dbn_ptr)
-    push!(res, (; startidx, endidx, dbn, en))
+    push!(res, ResultWindowMFE(startidx:endidx, dbn, en * Private.unit_energy))
     return nothing
 end
 
 """
-    mfe_window(fc::FoldCompound) -> Vector of results
-    mfe_window(seq::AbstractString; window_size) -> Vector of results
+    mfe_window(fc::FoldCompound) -> Vector{ResultWindowMFE}
+    mfe_window(seq::AbstractString; window_size) -> Vector{ResultWindowMFE}
 
 Run a minimum free energy structure calculation in a sliding
 window. The `FoldCompound` must have the `window_size` and correct
@@ -703,11 +708,9 @@ FoldCompound(seq; window_size, options=ViennaRNA.LibRNA.VRNA_OPTION_WINDOW)
 """
 function mfe_window(fc::FoldCompound)
     # TODO: check that fc has options=LibRNA.VRNA_OPTION_WINDOW set
-    #cb_fnptr = fnptr_callback_mfe_window_save
     cb_fnptr = @cfunction(_callback_mfe_window_save, Cvoid,
                           (Cint, Cint, Ptr{Cchar}, Cfloat, Ptr{Cvoid}))
-    T = @NamedTuple{startidx::Int, endidx::Int, dbn::String, en::Float64}
-    res = T[]
+    res = ResultWindowMFE[]
     # TODO: is this GC.@preserve needed?
     GC.@preserve res ViennaRNA.LibRNA.vrna_mfe_window_cb(
         fc.ptr, cb_fnptr, pointer_from_objref(res)
@@ -720,6 +723,50 @@ function mfe_window(seq::AbstractString; window_size::Int)
     res = mfe_window(fc)
     finalize(fc)
     return res
+end
+
+# mfe_window_channel: like mfe_window, but put results into a Channel
+
+function _callback_mfe_window_channel(startidx::Cint, endidx::Cint,
+                                      dbn_ptr::Ptr{Cchar}, en::Cfloat,
+                                      data::Ptr{Cvoid})
+    chan = unsafe_pointer_to_objref(data)::Channel
+    dbn = unsafe_string(dbn_ptr)
+    put!(chan, ResultWindowMFE(startidx:endidx, dbn, en * Private.unit_energy))
+    return nothing
+end
+
+"""
+    mfe_window_channel(fc::FoldCompound)
+    mfe_window_channel(seq::AbstractString; window_size::Int)
+
+Used to create a writer that puts mfe_window calculation results in a
+`Channel` that can then be read from there and processed.
+
+Usage:
+
+```
+chan = mfe_window_channel(seq; window_size)
+take!(chan)
+```
+"""
+function mfe_window_channel(fc::FoldCompound)
+    # TODO: check that options=LibRNA.VRNA_OPTION_WINDOW is set
+    function mfe_window_channel_writer(chan::Channel{ResultWindowMFE})
+        cb_fnptr = @cfunction(_callback_mfe_window_channel, Cvoid,
+                              (Cint, Cint, Ptr{Cchar}, Cfloat, Ptr{Cvoid}))
+        # TODO: is this GC.@preserve needed?
+        GC.@preserve chan ViennaRNA.LibRNA.vrna_mfe_window_cb(
+            fc.ptr, cb_fnptr, pointer_from_objref(chan)
+        )
+        return nothing
+    end
+    return Channel{ResultWindowMFE}(mfe_window_channel_writer, 1000; spawn=true)
+end
+
+function mfe_window_channel(seq::AbstractString; window_size::Int)
+    fc = FoldCompound(seq; window_size, options=(LibRNA.VRNA_OPTION_DEFAULT | LibRNA.VRNA_OPTION_WINDOW))
+    return mfe_window_channel(fc)
 end
 
 # neighbors: move sets

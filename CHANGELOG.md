@@ -8,6 +8,9 @@
 - added `mfe_window()` to calculate mfe substructures for a
   sliding window
 
+- added `mfe_window_channel()` to process results from `mfe_window`
+  through a `Channel`
+
 - added `ViennaRNA.init_rand_seed(seedval)` to seed the random
   number generator used by ViennaRNA
 
