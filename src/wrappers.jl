@@ -5,26 +5,40 @@ import ViennaRNA.LibRNA
 const unit_energy = 1.0u"kcal/mol"
 const unit_energy_int = 0.01u"kcal/mol"
 const unit_temperature = u"°C"
-const PARAMS_LOADFNS = Dict(
-    :RNA_Turner1999     => LibRNA.vrna_params_load_RNA_Turner1999,
-    :RNA_Turner2004     => LibRNA.vrna_params_load_RNA_Turner2004,
-    :RNA_Andronescu2007 => LibRNA.vrna_params_load_RNA_Andronescu2007,
-    :RNA_Langdon2018    => LibRNA.vrna_params_load_RNA_Langdon2018,
-    :DNA_Mathews1999    => LibRNA.vrna_params_load_DNA_Mathews1999,
-    :DNA_Mathews2004    => LibRNA.vrna_params_load_DNA_Mathews2004,
-)
-const PLOT_COORDS_PLOT_TYPE = Dict(
-    :default  => LibRNA.VRNA_PLOT_TYPE_DEFAULT,
-    :simple   => LibRNA.VRNA_PLOT_TYPE_SIMPLE,
-    :naview   => LibRNA.VRNA_PLOT_TYPE_NAVIEW,
-    :circular => LibRNA.VRNA_PLOT_TYPE_CIRCULAR,
-    :turtle   => LibRNA.VRNA_PLOT_TYPE_TURTLE,
-    :puzzler  => LibRNA.VRNA_PLOT_TYPE_PUZZLER,
-)
-const SAMPLE_STRUCTURES_OPTIONS = Dict(
-    :default      => LibRNA.VRNA_PBACKTRACK_DEFAULT,
-    :nonredundant => LibRNA.VRNA_PBACKTRACK_NON_REDUNDANT,
-)
+
+function _makedict(prefix::AbstractString)
+    vs = filter(startswith(prefix), String.(names(LibRNA)))
+    return Dict(Symbol(lowercase(replace(v, prefix => ""))) => getproperty(LibRNA, Symbol(v)) for v in vs)
+end
+
+const FOLDCOMPOUND_OPTIONS = _makedict("VRNA_OPTION_")
+# const OPTIONS = Dict(
+#     :default      => LibRNA.VRNA_OPTIONS_DEFAULT,
+#     ...
+# )
+
+const PARAMS_LOADFNS =
+    Dict(Symbol(replace(v, "vrna_params_load_" => "")) => getproperty(LibRNA, Symbol(v))
+         for v in (String.(names(LibRNA)) |>
+             vs -> filter!(startswith(r"vrna_params_load_(RNA|DNA)"), vs) |>
+             vs -> filter!(s -> s ∉ ["vrna_params_load_RNA_misc_special_hairpins"], vs))
+    )
+# const PARAMS_LOADFNS = Dict(
+#     :RNA_Turner1999     => LibRNA.vrna_params_load_RNA_Turner1999,
+#     ...
+# )
+
+const PLOT_COORDS_PLOT_TYPE = _makedict("VRNA_PLOT_TYPE_")
+# const PLOT_COORDS_PLOT_TYPE = Dict(
+#     :default  => LibRNA.VRNA_PLOT_TYPE_DEFAULT,
+#     ...
+# )
+
+const SAMPLE_STRUCTURES_OPTIONS = _makedict("VRNA_PBACKTRACK_")
+# const SAMPLE_STRUCTURES_OPTIONS = Dict(
+#     :default      => LibRNA.VRNA_PBACKTRACK_DEFAULT,
+#     ...
+# )
 
 end # module Private
 import .Private
