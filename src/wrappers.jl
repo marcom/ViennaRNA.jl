@@ -44,10 +44,9 @@ end # module Private
 import .Private
 
 
-# TODO: document `options` kwarg, flags that can be bitwise-or'ed
 """
-    FoldCompound(seq::AbstractString; [params, temperature], [model_details...])
-    FoldCompound(msa::Vector{<:AbstractString}; [params, temperature], [model_details...])
+    FoldCompound(seq::AbstractString; [options, params, temperature], [model_details...])
+    FoldCompound(msa::Vector{<:AbstractString}; [options, params, temperature], [model_details...])
 
 A `FoldCompound` encapsulates nucleotide sequences, energy
 parameters, and model details.
@@ -58,6 +57,7 @@ Input arguments:
 - `msa`: multiple sequence alignment, for comparative folding
    (alifold). A vector of sequences which may contain multiple
    strands, denoted by '&', and gap '-' characters
+- `options`: one or more of $(sort(collect(keys(Private.FOLDCOMPOUND_OPTIONS))))
 - `params`: energy parameter set, possible values are
   `$(sort(collect(keys(Private.PARAMS_LOADFNS))))`. Default is
   `:RNA_Turner2004`.
@@ -104,11 +104,12 @@ mutable struct FoldCompound
     uptr        :: UnsafePtr{LibRNA.vrna_fc_s}
     msa         :: Vector{String}
     msa_strands :: Vector{Vector{SubString{String}}}
+    options     :: Vector{Symbol}
 
     FoldCompound(seq::AbstractString; kwargs...) = FoldCompound([seq]; kwargs...)
     function FoldCompound(msa::Vector{<:AbstractString};
                           model_details::Ptr{LibRNA.vrna_md_s}=Ptr{LibRNA.vrna_md_s}(C_NULL),
-                          options::Unsigned=LibRNA.VRNA_OPTION_DEFAULT,
+                          options::Vector{Symbol}=[:default],
                           params::Symbol=:RNA_Turner2004,
                           temperature::Quantity=37.0u"°C",
                           # model_details options
@@ -136,6 +137,10 @@ mutable struct FoldCompound
             end
         end
         msa_strands = split.(msa, '&')
+        if any(x -> !haskey(Private.FOLDCOMPOUND_OPTIONS, x), options)
+            throw(ArgumentError("unknown FoldCompound options: $(setdiff(options, keys(Private.FOLDCOMPOUND_OPTIONS))),"
+                                * " allowed values are: $(keys(Private.FOLDCOMPOUND_OPTIONS))"))
+        end
         if ! haskey(Private.PARAMS_LOADFNS, params)
             throw(ArgumentError("unknown energy parameters: $(params), allowed"
                                 * " values are: $(keys(Private.PARAMS_LOADFNS))"))
@@ -160,14 +165,18 @@ mutable struct FoldCompound
         LibRNA.vrna_md_defaults_uniq_ML(Int(uniq_ML))
         LibRNA.vrna_md_defaults_window_size(window_size)
 
+        options_int = UInt(0)
+        for opt in options
+            options_int |= Private.FOLDCOMPOUND_OPTIONS[opt]
+        end
         ptr = if length(msa) == 1
-            LibRNA.vrna_fold_compound(first(msa), model_details, options)
+            LibRNA.vrna_fold_compound(first(msa), model_details, options_int)
         else
-            LibRNA.vrna_fold_compound_comparative(msa, model_details, options)
+            LibRNA.vrna_fold_compound_comparative(msa, model_details, options_int)
         end
         ptr != C_NULL || error("vrna_fold_compound returned pointer == C_NULL")
 
-        fc = new(ptr, UnsafePtr(ptr), msa, msa_strands)
+        fc = new(ptr, UnsafePtr(ptr), msa, msa_strands, options)
         if fc.min_loop_size != min_loop_size
             @warn "min_loop_size was specified as $min_loop_size, but got set to $(fc.min_loop_size) by ViennaRNA"
         end
@@ -291,14 +300,15 @@ function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     circ = fc.circular ? " (circular)" : ""
     comparative = length(fc.msa) > 1 ? " [comparative]" : ""
     println(io, "FoldCompound, $strand, $nt$circ$comparative")
-    println(io, "  params      : $(fc.params_name)")
-    println(io, "  temperature : $(fc.temperature)")
-    println(io, "  options     : circular=$(fc.circular), dangles=$(fc.dangles), gquadruplex=$(fc.gquadruplex), log_ML=$(fc.log_ML),")
-    println(io, "                max_bp_span=$(fc.max_bp_span), min_loop_size=$(fc.min_loop_size), no_GU_basepairs=$(fc.no_GU_basepairs), no_GU_closure=$(fc.no_GU_closure),")
-    println(io, "                no_lonely_pairs=$(fc.no_lonely_pairs), special_hairpins=$(fc.special_hairpins), uniq_ML=$(fc.uniq_ML), window_size=$(fc.window_size)")
+    println(io, "  options       : $(fc.options)")
+    println(io, "  params        : $(fc.params_name)")
+    println(io, "  temperature   : $(fc.temperature)")
+    println(io, "  model_details : circular=$(fc.circular), dangles=$(fc.dangles), gquadruplex=$(fc.gquadruplex), log_ML=$(fc.log_ML),")
+    println(io, "                  max_bp_span=$(fc.max_bp_span), min_loop_size=$(fc.min_loop_size), no_GU_basepairs=$(fc.no_GU_basepairs), no_GU_closure=$(fc.no_GU_closure),")
+    println(io, "                  no_lonely_pairs=$(fc.no_lonely_pairs), special_hairpins=$(fc.special_hairpins), uniq_ML=$(fc.uniq_ML), window_size=$(fc.window_size)")
     if length(fc.msa) == 1
         for (i,s) in enumerate(first(fc.msa_strands))
-            println(io,   "  strand $i    : $(s)")
+            println(io,   "  strand $i      : $(s)")
         end
     else
         println(io, "  MSA")
@@ -471,7 +481,7 @@ function energy(sequence::AbstractString,
                 structure::AbstractString;
                 verbose::Bool=false,
                 verbosity_level::Integer=LibRNA.VRNA_VERBOSITY_DEFAULT)
-    fc = FoldCompound(sequence; options=LibRNA.VRNA_OPTION_EVAL_ONLY)
+    fc = FoldCompound(sequence; options=[:eval_only])
     res = energy(fc, structure; verbose, verbosity_level)
     finalize(fc)
     return res
@@ -678,7 +688,7 @@ function mfe(fc::FoldCompound)
 end
 
 function mfe(sequence::AbstractString)
-    fc = FoldCompound(sequence; options=LibRNA.VRNA_OPTION_MFE)
+    fc = FoldCompound(sequence; options=[:mfe])
     res = mfe(fc)
     finalize(fc)
     return res
@@ -717,11 +727,11 @@ Run a minimum free energy structure calculation in a sliding
 window. The `FoldCompound` must have the `window_size` and correct
 `options` set to be able to call `mfe_window` on it:
 ```
-FoldCompound(seq; window_size, options=ViennaRNA.LibRNA.VRNA_OPTION_WINDOW)
+FoldCompound(seq; window_size, options=[:window])
 ```
 """
 function mfe_window(fc::FoldCompound)
-    # TODO: check that fc has options=LibRNA.VRNA_OPTION_WINDOW set
+    :window in fc.options || throw(ArgumentError("fc must have :window set in options"))
     cb_fnptr = @cfunction(_callback_mfe_window_save, Cvoid,
                           (Cint, Cint, Ptr{Cchar}, Cfloat, Ptr{Cvoid}))
     res = ResultWindowMFE[]
@@ -733,7 +743,7 @@ function mfe_window(fc::FoldCompound)
 end
 
 function mfe_window(seq::AbstractString; window_size::Int)
-    fc = FoldCompound(seq; window_size, options=(LibRNA.VRNA_OPTION_DEFAULT | LibRNA.VRNA_OPTION_WINDOW))
+    fc = FoldCompound(seq; window_size, options=[:default, :window])
     res = mfe_window(fc)
     finalize(fc)
     return res
@@ -765,7 +775,7 @@ take!(chan)
 ```
 """
 function mfe_window_channel(fc::FoldCompound)
-    # TODO: check that options=LibRNA.VRNA_OPTION_WINDOW is set
+    :window in fc.options || throw(ArgumentError("fc must have :window set in options"))
     function mfe_window_channel_writer(chan::Channel{ResultWindowMFE})
         cb_fnptr = @cfunction(_callback_mfe_window_channel, Cvoid,
                               (Cint, Cint, Ptr{Cchar}, Cfloat, Ptr{Cvoid}))
@@ -779,7 +789,7 @@ function mfe_window_channel(fc::FoldCompound)
 end
 
 function mfe_window_channel(seq::AbstractString; window_size::Int)
-    fc = FoldCompound(seq; window_size, options=(LibRNA.VRNA_OPTION_DEFAULT | LibRNA.VRNA_OPTION_WINDOW))
+    fc = FoldCompound(seq; window_size, options=[:default, :window])
     return mfe_window_channel(fc)
 end
 
@@ -991,7 +1001,7 @@ function subopt(fc::FoldCompound; delta::Quantity, sorted::Bool=true)
 end
 
 function subopt(sequence::AbstractString; delta::Quantity, sorted::Bool=true)
-    fc = FoldCompound(sequence; uniq_ML=true, options=LibRNA.VRNA_OPTION_MFE)
+    fc = FoldCompound(sequence; uniq_ML=true, options=[:mfe])
     res = subopt(fc; delta, sorted)
     finalize(fc)
     return res
@@ -1017,7 +1027,7 @@ function subopt_zuker(fc::FoldCompound)
 end
 
 function subopt_zuker(sequence::AbstractString)
-    fc = FoldCompound(sequence; options=LibRNA.VRNA_OPTION_MFE)
+    fc = FoldCompound(sequence; options=[:mfe])
     res = subopt_zuker(fc)
     finalize(fc)
     return res

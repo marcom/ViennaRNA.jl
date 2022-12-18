@@ -31,7 +31,7 @@ using Unitful
         @test fc.window_size      == length(fc)  # ≠ LibRNA.VRNA_MODEL_DEFAULT_WINDOW_SIZE == -1
 
         # options
-        fc = FoldCompound(s; options=ViennaRNA.LibRNA.VRNA_OPTION_MFE)
+        fc = FoldCompound(s; options=[:mfe])
         @test length(fc) == 9
         # use different energy parameter sets
         fc = FoldCompound(s; params=:RNA_Turner1999)
@@ -367,7 +367,7 @@ end
     Tres = Vector{ViennaRNA.ResultWindowMFE}
     seq = "G"^30 * "A"^3 * "C"^30
     window_size = 30
-    fc = FoldCompound(seq; window_size, options=(LibRNA.VRNA_OPTION_MFE | LibRNA.VRNA_OPTION_WINDOW))
+    fc = FoldCompound(seq; window_size, options=[:mfe, :window])
     res1 = mfe_window(fc)
     @test res1 isa Tres
     @test length(res1) > 0
@@ -381,7 +381,7 @@ end
     Tres = Vector{ViennaRNA.ResultWindowMFE}
     seq = "G"^30 * "A"^3 * "C"^30
     window_size = 30
-    fc = FoldCompound(seq; window_size, options=(LibRNA.VRNA_OPTION_MFE | LibRNA.VRNA_OPTION_WINDOW))
+    fc = FoldCompound(seq; window_size, options=[:mfe, :window])
     chan = mfe_window_channel(fc)
     res1 = collect(chan)
     @test res1 isa Tres
