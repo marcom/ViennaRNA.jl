@@ -679,6 +679,9 @@ end
 Calculate the minimum free energy structure and energy.
 """
 function mfe(fc::FoldCompound)
+    if :window in fc.options
+        throw(ArgumentError("mfe() doesn't work with the `:window` option set for FoldCompound"))
+    end
     seqlen = length(fc)
     cstr_structure = Ptr{Cchar}(LibRNA.vrna_alloc(seqlen + 1))
     en_mfe = LibRNA.vrna_mfe(fc.ptr, cstr_structure)

@@ -360,6 +360,7 @@ end
     fc = FoldCompound(seq)
     @test mfe(fc) isa Tuple{String,Unitful.Quantity}
     @test mfe(seq) isa Tuple{String,Unitful.Quantity}
+    @test_throws ArgumentError mfe(FoldCompound(seq; options=[:window]))
 end
 
 @testset "mfe_window" begin
