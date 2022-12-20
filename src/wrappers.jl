@@ -94,10 +94,10 @@ Model details (additional keyword arguments):
   `sample_structures` and `subopt`. Default is
   `$(Bool(LibRNA.VRNA_MODEL_DEFAULT_UNIQ_ML))`.
 - `window_size`: window size to be used for local calculations
-  performed in a window moving over the sequence. This value is
-  ignored unless the `LibRNA.VRNA_OPTION_WINDOW` flag is set for
-  `options`. The default value for `window_size` is
-  `$(Int(LibRNA.VRNA_MODEL_DEFAULT_WINDOW_SIZE))`.
+   performed in a window moving over the sequence. This value is
+   ignored unless the `:window` option is set in the `FoldCompound`
+   `options`. The default value for `window_size` is
+   `$(Int(LibRNA.VRNA_MODEL_DEFAULT_WINDOW_SIZE))`.
 """
 mutable struct FoldCompound
     ptr         :: Ptr{LibRNA.vrna_fc_s}
