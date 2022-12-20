@@ -38,6 +38,7 @@ such as energy parameters, temperature, etc.
 ```julia
 fc = FoldCompound("GGGGGAAAAACCCCCC";
                   params=:RNA_Turner2004,
+                  options=[:mfe, :pf],
                   temperature=37u"°C",
                   uniq_ML=true,
                   circular=false)
@@ -49,6 +50,9 @@ Important keyword arguments
   `:RNA_Turner1999`, `:RNA_Turner2004`, `:RNA_Andronescu2007`,
   `:RNA_Langdon2018`, `:DNA_Mathews1999`, `:DNA_Mathews2004`.  Default
   is `:RNA_Turner2004`.
+
+- `options`: one or more of `[:default, :eval_only, :hybrid, :mfe,
+  :pf, :window]`.
 
 - `temperature` is used to rescale the free energies with the formula
   `ΔG = ΔH - TΔS` (the energy parameter sets contain enthalpy and
@@ -64,6 +68,8 @@ Model details (additional keyword arguments):
   `false`.
 - `log_ML`: use logarithmic energy model for multiloops. Default is
   `false`.
+- `max_bp_span`: maximum number of bases over which a basepair can
+  span. Default value is `-1` (which means unlimited).
 - `min_loop_length`: the minimum size of a loop (without the closing
    base pair). Default is `3`.
 - `no_GU_basepairs`: disallow G-U basepairs. Default is `false`.
@@ -73,8 +79,11 @@ Model details (additional keyword arguments):
 - `special_hairpins`: use special hairpin energies for certain tri-,
   tetra- and hexloops. Default is `true`.
 - `uniq_ML`: use unique decomposition for multiloops, needed for
-  `pbacktrack` and `subopt`. Default is `false`.
-
+  `sample_structures` and `subopt`. Default is `false`.
+- `window_size`: window size to be used for local calculations
+  performed in a window moving over the sequence. This value is
+  ignored unless the `:window` option is set in the `FoldCompound`
+  `options`. The default value for `window_size` is `-1`.
 
 #### Multiple strands
 
@@ -120,13 +129,14 @@ prob_of_structure(fc, "(((((.....))))).")  # => 0.5085737925408758
 ensemble_defect(fc, "(((((.....))))).")  # => 0.33085374128228884
 ```
 
-### Probabilistic / stochastic backtrack
+### Sample structures (probabilistic / stochastic backtrack)
 
 Sample from Boltzmann ensemble of secondary structures
 
 ```julia
-pbacktrack(fc)                  # => [ "((((......)))).." ]
-pbacktrack(fc; num_samples=10)  # => 10-element Vector{String}
+sample_structures(fc)                         # => [ "((((......)))).." ]
+sample_structures(fc; options=:nonredundant,
+                      num_samples=20)         # => 20-element Vector{String}
 ```
 
 ### Suboptimal structures
@@ -141,6 +151,29 @@ Suboptimal structures with the method of Zuker
 
 ```julia
 subopt_zuker(fc)  # => Vector{Tuple{String, Quantity}}
+```
+
+### Sliding window prediction of MFE
+
+`mfe_window` saves all the results in a `Vector`.
+
+```julia
+seq = "G"^50 * "A"^4 * "C"^50
+mfe_window(seq; window_size=30)
+fc = FoldCompound(seq; options=[:default, :window], window_size=30)
+mfe_window(fc)  # => Vector{ResultWindowMFE}
+```
+
+`mfe_window_channel` returns a `Channel` that can be used to
+iteratively process the results.
+
+```julia
+seq = "G"^50 * "A"^4 * "C"^50
+chan = mfe_window_channel(seq; window_size=30)
+take!(chan)
+fc = FoldCompound(seq; options=[:default, :window], window_size=30)
+chan = mfe_window_channel(fc)
+take!(chan)
 ```
 
 ### Neighboring structures
@@ -212,6 +245,12 @@ secondary structure plotting functionality.
 ```julia
 inverse_fold("AAAAAAA", "((...))")     a# => ("GCAAAGC", 2.0f0)
 inverse_pf_fold("AAAAAAA", "((...))")  # => ("GCCAAGC", 2.0244526863098145 kcal mol^-1)
+```
+
+### Seeding the random number generator
+
+```julia
+ViennaRNA.init_rand_seed(42)
 ```
 
 ## Reducing memory usage
