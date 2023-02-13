@@ -27,8 +27,14 @@ using Unitful
         @test fc.params_name      == "RNA - Turner 2004"
         @test fc.special_hairpins == LibRNA.VRNA_MODEL_DEFAULT_SPECIAL_HP
         @test fc.temperature      == 37u"°C"
+        @test fc.type             == (s isa String ? :single : :comparative)
         @test fc.uniq_ML          == LibRNA.VRNA_MODEL_DEFAULT_UNIQ_ML
         @test fc.window_size      == length(fc)  # ≠ LibRNA.VRNA_MODEL_DEFAULT_WINDOW_SIZE == -1
+        if fc.type == :single
+            @test fc.sequence     == s
+        elseif fc.type == :comparative
+            @test isnothing(fc.sequence)
+        end
 
         # options
         fc = FoldCompound(s; options=[:mfe])

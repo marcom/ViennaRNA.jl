@@ -17,6 +17,13 @@ const FOLDCOMPOUND_OPTIONS = _makedict("VRNA_OPTION_")
 #     ...
 # )
 
+const FOLDCOMPOUND_TYPE = _makedict("VRNA_FC_TYPE_")
+# const OPTIONS = Dict(
+#     :single      => LibRNA.VRNA_FC_TYPE_SINGLE,
+#     :comparative => LibRNA.VRNA_FC_TYPE_COMPARATIVE,
+# )
+const FOLDCOMPOUND_TYPE_C2JL = Dict(v => k for (k, v) in FOLDCOMPOUND_TYPE)
+
 const PARAMS_LOADFNS =
     Dict(Symbol(replace(v, "vrna_params_load_" => "")) => getproperty(LibRNA, Symbol(v))
          for v in (String.(names(LibRNA)) |>
@@ -187,7 +194,7 @@ mutable struct FoldCompound
 end
 
 # TODO: fc.uptr.length[] |> Int
-Base.length(fc::FoldCompound) = sum(size(fc))
+Base.length(fc::FoldCompound) = sum(size(fc); init=0)
 
 Base.size(fc::FoldCompound) = ntuple(i -> length(first(fc.msa_strands)[i]), fc.nstrands)
 
@@ -222,6 +229,11 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
         return Int(fc.uptr.strands[])
     elseif sym == :params_name
         return unsafe_string(reinterpret(Ptr{UInt8}, pointer(fc.uptr.params[].param_file)))
+    elseif sym == :sequence
+        if fc.uptr.sequence[] == C_NULL
+            return nothing
+        end
+        return unsafe_string(pointer(fc.uptr.sequence[]))
     elseif sym == :special_hairpins
         return Bool(fc.uptr.params[].model_details.special_hp[])
     elseif sym == :temperature
@@ -231,6 +243,8 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
             error("params temperature and model_details temperature don't agree")
         end
         return par_temperature * Private.unit_temperature
+    elseif sym == :type
+        return Private.FOLDCOMPOUND_TYPE_C2JL[fc.uptr.type[]]
     elseif sym == :uniq_ML
         return Bool(fc.uptr.params[].model_details.uniq_ML[])
     elseif sym == :window_size
@@ -285,7 +299,7 @@ Base.propertynames(fc::FoldCompound) =
      :circular, :dangles, :gquadruplex, :has_matrices,
      :has_exp_matrices, :log_ML, :max_bp_span, :min_loop_size,
      :no_GU_basepairs, :no_GU_closure, :no_lonely_pairs, :nstrands,
-     :params_name, :special_hairpins, :temperature, :uniq_ML,
+     :params_name, :sequence, :special_hairpins, :temperature, :type, :uniq_ML,
      :window_size,
      :matrices_c, :matrices_fML, :matrices_fM1,
      :matrices_f5, :matrices_f3, :matrices_fM2,
