@@ -203,51 +203,51 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
     # Julia compiler can still constant-propagate through the desired
     # symbol (`sym` is a constant for most calls from the POV of the
     # caller of getproperty)
-    if sym == :circular
+    if sym === :circular
         return Bool(fc.uptr.params[].model_details.circ[])
-    elseif sym == :dangles
+    elseif sym === :dangles
         return Int(fc.uptr.params[].model_details.dangles[])
-    elseif sym == :gquadruplex
+    elseif sym === :gquadruplex
         return Bool(fc.uptr.params[].model_details.gquad[])
-    elseif sym == :has_matrices
+    elseif sym === :has_matrices
         fc.uptr.matrices[] != C_NULL
-    elseif sym == :has_exp_matrices
+    elseif sym === :has_exp_matrices
         fc.uptr.exp_matrices[] != C_NULL
-    elseif sym == :log_ML
+    elseif sym === :log_ML
         return Bool(fc.uptr.params[].model_details.logML[])
-    elseif sym == :max_bp_span
+    elseif sym === :max_bp_span
         return Int(fc.uptr.params[].model_details.max_bp_span[])
-    elseif sym == :min_loop_size
+    elseif sym === :min_loop_size
         return Int(fc.uptr.params[].model_details.min_loop_size[])
-    elseif sym == :no_GU_basepairs
+    elseif sym === :no_GU_basepairs
         return Bool(fc.uptr.params[].model_details.noGU[])
-    elseif sym == :no_GU_closure
+    elseif sym === :no_GU_closure
         return Bool(fc.uptr.params[].model_details.noGUclosure[])
-    elseif sym == :no_lonely_pairs
+    elseif sym === :no_lonely_pairs
         return Bool(fc.uptr.params[].model_details.noLP[])
-    elseif sym == :nstrands
+    elseif sym === :nstrands
         return Int(fc.uptr.strands[])
-    elseif sym == :params_name
+    elseif sym === :params_name
         return unsafe_string(reinterpret(Ptr{UInt8}, pointer(fc.uptr.params[].param_file)))
-    elseif sym == :sequence
+    elseif sym === :sequence
         if fc.uptr.sequence[] == C_NULL
             return nothing
         end
         return unsafe_string(pointer(fc.uptr.sequence[]))
-    elseif sym == :special_hairpins
+    elseif sym === :special_hairpins
         return Bool(fc.uptr.params[].model_details.special_hp[])
-    elseif sym == :temperature
+    elseif sym === :temperature
         par_temperature = fc.uptr.params[].temperature[]
         md_temperature = fc.uptr.params[].model_details.temperature[]
         if par_temperature != md_temperature
-            error("params temperature and model_details temperature don't agree")
+            error("params temperature and model_details temperature don't agree: $par_temperature != $md_temperature")
         end
         return par_temperature * Private.unit_temperature
-    elseif sym == :type
+    elseif sym === :type
         return Private.FOLDCOMPOUND_TYPE_C2JL[fc.uptr.type[]]
-    elseif sym == :uniq_ML
+    elseif sym === :uniq_ML
         return Bool(fc.uptr.params[].model_details.uniq_ML[])
-    elseif sym == :window_size
+    elseif sym === :window_size
         return Int(fc.uptr.params[].model_details.window_size[])
     # matrices_{c,fML,fM1,f5,f3,fM2,Fc,FcH,FcI,FcM}
     elseif startswith(String(sym), "matrices_")
@@ -312,15 +312,15 @@ function Base.show(io::IO, mime::MIME"text/plain", fc::FoldCompound)
     strand = "$(fc.nstrands) strand" * (fc.nstrands > 1 ? "s" : "")
     nt = "$(length(fc)) nt$(fc.nstrands > 1 ? " total" : "")"
     circ = fc.circular ? " (circular)" : ""
-    comparative = length(fc.msa) > 1 ? " [comparative]" : ""
-    println(io, "FoldCompound, $strand, $nt$circ$comparative")
+    println(io, "FoldCompound, $strand, $nt$circ")
+    println(io, "  type          : $(fc.type)")
     println(io, "  options       : $(fc.options)")
     println(io, "  params        : $(fc.params_name)")
     println(io, "  temperature   : $(fc.temperature)")
     println(io, "  model_details : circular=$(fc.circular), dangles=$(fc.dangles), gquadruplex=$(fc.gquadruplex), log_ML=$(fc.log_ML),")
     println(io, "                  max_bp_span=$(fc.max_bp_span), min_loop_size=$(fc.min_loop_size), no_GU_basepairs=$(fc.no_GU_basepairs), no_GU_closure=$(fc.no_GU_closure),")
     println(io, "                  no_lonely_pairs=$(fc.no_lonely_pairs), special_hairpins=$(fc.special_hairpins), uniq_ML=$(fc.uniq_ML), window_size=$(fc.window_size)")
-    if length(fc.msa) == 1
+    if fc.type === :single
         for (i,s) in enumerate(first(fc.msa_strands))
             println(io,   "  strand $i      : $(s)")
         end
