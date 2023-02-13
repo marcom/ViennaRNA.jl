@@ -30,9 +30,9 @@ using Unitful
         @test fc.type             == (s isa String ? :single : :comparative)
         @test fc.uniq_ML          == LibRNA.VRNA_MODEL_DEFAULT_UNIQ_ML
         @test fc.window_size      == length(fc)  # ≠ LibRNA.VRNA_MODEL_DEFAULT_WINDOW_SIZE == -1
-        if fc.type == :single
+        if fc.type === :single
             @test fc.sequence     == s
-        elseif fc.type == :comparative
+        elseif fc.type === :comparative
             @test isnothing(fc.sequence)
         end
 
