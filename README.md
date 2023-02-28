@@ -37,7 +37,6 @@ such as energy parameters, temperature, etc.
 
 ```julia
 fc = FoldCompound("GGGGGAAAAACCCCCC";
-                  params=:RNA_Turner2004,
                   options=[:mfe, :pf],
                   temperature=37u"°C",
                   uniq_ML=true,
@@ -45,11 +44,6 @@ fc = FoldCompound("GGGGGAAAAACCCCCC";
 ```
 
 Important keyword arguments
-
-- `params`: energy parameter set, possible values are
-  `:RNA_Turner1999`, `:RNA_Turner2004`, `:RNA_Andronescu2007`,
-  `:RNA_Langdon2018`, `:DNA_Mathews1999`, `:DNA_Mathews2004`.  Default
-  is `:RNA_Turner2004`.
 
 - `options`: one or more of `[:default, :eval_only, :hybrid, :mfe,
   :pf, :window]`.
@@ -84,6 +78,34 @@ Model details (additional keyword arguments):
   performed in a window moving over the sequence. This value is
   ignored unless the `:window` option is set in the `FoldCompound`
   `options`. The default value for `window_size` is `-1`.
+
+#### Choosing an energy parameter set
+
+ViennaRNA stores energy parameters in global variables after loading
+them from a file.  Each time a new `FoldCompound` is created, the
+parameters are copied from the global variables and saved inside the
+`FoldCompound`.
+
+Energy parameter sets can be chosen by calling a function specific to
+each parameter set, or by passing a Symbol,
+e.g. `ViennaRNA.params_load(:RNA_Turner1999)`.
+
+```julia
+ViennaRNA.params_load_defaults()  # default is RNA_Turner2004
+ViennaRNA.params_load_DNA_Mathews1999()
+ViennaRNA.params_load_DNA_Mathews2004()
+ViennaRNA.params_load_RNA_Andronescu2007()
+ViennaRNA.params_load_RNA_Langdon2018()
+ViennaRNA.params_load_RNA_Turner1999()
+ViennaRNA.params_load_RNA_Turner2004()
+ViennaRNA.params_load_RNA_misc_special_hairpins()
+
+ViennaRNA.params_load(:DNA_Mathews2004)
+# Options are
+#   :DNA_Mathews1999, :DNA_Mathews2004,
+#   :RNA_Andronescu2007, :RNA_Langdon2018,
+#   :RNA_Turner1999, :RNA_Turner2004
+```
 
 #### Multiple strands
 
