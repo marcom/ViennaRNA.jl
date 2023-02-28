@@ -45,7 +45,7 @@ fc = FoldCompound("GGGGGAAAAACCCCCC";
 
 Important keyword arguments
 
-- `options`: one or more of `[:default, :eval_only, :hybrid, :mfe,
+- `options` is a subset of `[:default, :eval_only, :hybrid, :mfe,
   :pf, :window]`.
 
 - `temperature` is used to rescale the free energies with the formula
@@ -79,19 +79,23 @@ Model details (additional keyword arguments):
   ignored unless the `:window` option is set in the `FoldCompound`
   `options`. The default value for `window_size` is `-1`.
 
-#### Choosing an energy parameter set
+#### Changing the energy parameter set
 
 ViennaRNA stores energy parameters in global variables after loading
 them from a file.  Each time a new `FoldCompound` is created, the
 parameters are copied from the global variables and saved inside the
 `FoldCompound`.
 
-Energy parameter sets can be chosen by calling a function specific to
-each parameter set, or by passing a Symbol,
-e.g. `ViennaRNA.params_load(:RNA_Turner1999)`.
+The global variables storing energy parameters can be changed by
+calling a function specific to each parameter set, or via a Symbol
+with `ViennaRNA.params_load(:RNA_Turner1999)`. Subsequent calls to
+`FoldCompound` will use the new parameters and store a copy of the
+parameters in the newly created `FoldCompound`.
+
+The default energy set loaded on startup is `:RNA_Turner2004`.
 
 ```julia
-ViennaRNA.params_load_defaults()  # default is RNA_Turner2004
+ViennaRNA.params_load_defaults()  # default is :RNA_Turner2004
 ViennaRNA.params_load_DNA_Mathews1999()
 ViennaRNA.params_load_DNA_Mathews2004()
 ViennaRNA.params_load_RNA_Andronescu2007()
