@@ -159,7 +159,7 @@ end
     params_load(params::Symbol)
 
 Load the energy parameter set specified by `params`. Options are
-$(keys(Private.PARAMS_LOADFNS)).
+`$(keys(Private.PARAMS_LOADFNS))`.
 """
 function params_load(params::Symbol)
     # TODO: support :defaults, :RNA_misc_special_hairpins
@@ -189,7 +189,7 @@ end
 """
     params_save(filename)
 
-Write the current energy parameter set to the file `filename`.
+Write the current energy parameters to the file `filename`.
 """
 function params_save(filename::AbstractString)
     if LibRNA.vrna_params_save(filename, LibRNA.VRNA_PARAMETER_FORMAT_DEFAULT) == 0
