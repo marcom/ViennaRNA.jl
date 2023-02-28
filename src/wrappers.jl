@@ -52,51 +52,115 @@ import .Private
 
 # TODO: automate creation of params_load_(DNA|RNA)_* functions so it's
 #       always in sync with ViennaRNA
+"""
+    params_load_defaults()
+
+Load the default parameter set into the global variables holding the
+energy parameters used when creating a `FoldCompound`. The default
+energy parameter set is `:RNA_Turner2004`.
+"""
 function params_load_defaults()
     if LibRNA.vrna_params_load_defaults() == 0
         error("couldn't load params in params_load_defaults()")
     end
 end
+
+"""
+    params_load_DNA_Mathews1999()
+
+Load the `:DNA_Mathews1999` parameter set into the global variables holding the
+energy parameters used when creating a `FoldCompound`.
+"""
 function params_load_DNA_Mathews1999()
     if LibRNA.vrna_params_load_DNA_Mathews1999() == 0
         error("couldn't load params in params_load_DNA_Mathews1999()")
     end
 end
+
+"""
+    params_load_DNA_Mathews2004()
+
+Load the `:DNA_Mathews2004` parameter set into the global variables holding the
+energy parameters used when creating a `FoldCompound`.
+"""
 function params_load_DNA_Mathews2004()
     if LibRNA.vrna_params_load_DNA_Mathews2004() == 0
         error("couldn't load params in params_load_DNA_Mathews2004()")
     end
 end
+
+"""
+    params_load_RNA_Andronescu2007()
+
+Load the `:RNA_Andronescu2007` parameter set into the global variables holding the
+energy parameters used when creating a `FoldCompound`.
+"""
 function params_load_RNA_Andronescu2007()
     if LibRNA.vrna_params_load_RNA_Andronescu2007() == 0
         error("couldn't load params in params_load_RNA_Andronescu2007()")
     end
 end
+
+"""
+    params_load_RNA_Langdon2018()
+
+Load the `:RNA_Langdon2018` parameter set into the global variables holding the
+energy parameters used when creating a `FoldCompound`.
+"""
 function params_load_RNA_Langdon2018()
     if LibRNA.vrna_params_load_RNA_Langdon2018() == 0
         error("couldn't load params in params_load_RNA_Langdon2018()")
     end
 end
+
+"""
+    params_load_RNA_Turner1999()
+
+Load the `:RNA_Turner1999` parameter set into the global variables holding the
+energy parameters used when creating a `FoldCompound`.
+"""
 function params_load_RNA_Turner1999()
     if LibRNA.vrna_params_load_RNA_Turner1999() == 0
         error("couldn't load params in params_load_RNA_Turner1999()")
     end
 end
+
+"""
+    params_load_RNA_Turner2004()
+
+Load the `:RNA_Turner2004` parameter set into the global variables holding the
+energy parameters used when creating a `FoldCompound`.
+"""
 function params_load_RNA_Turner2004()
     if LibRNA.vrna_params_load_RNA_Turner2004() == 0
         error("couldn't load params in params_load_RNA_Turner2004()")
     end
 end
+
 function params_load_RNA_misc_special_hairpins()
     if LibRNA.vrna_params_load_RNA_misc_special_hairpins() == 0
         error("couldn't load params in params_load_RNA_misc_special_hairpins()")
     end
 end
+
+"""
+    params_load_from_string(str, name)
+
+Load the energy parameters from a string `str` and use `name` as the
+name for the energy parmeter set.
+"""
 function params_load_from_string(str::AbstractString, name::AbstractString)
     if LibRNA.vrna_params_load_from_string(str, name, LibRNA.VRNA_PARAMETER_FORMAT_DEFAULT) == 0
         error("error loading energy parameters from string:\n$str")
     end
 end
+
+"""
+    params_load(params::Symbol)
+
+Load the energy parameter set specified by `params`. Options are
+$(keys(Private.PARAMS_LOADFNS)).
+"""
 function params_load(params::Symbol)
     # TODO: support :defaults, :RNA_misc_special_hairpins
     if ! haskey(Private.PARAMS_LOADFNS, params)
@@ -110,19 +174,29 @@ function params_load(params::Symbol)
     end
     return nothing
 end
+
+"""
+    params_load(filename)
+
+Read energy parameters from a file `filename`.
+"""
 function params_load(filename::AbstractString)
     if LibRNA.vrna_params_load(filename, LibRNA.VRNA_PARAMETER_FORMAT_DEFAULT) == 0
         error("error loading energy parameters from file $filename")
     end
 end
+
+"""
+    params_save(filename)
+
+Write the current energy parameter set to the file `filename`.
+"""
 function params_save(filename::AbstractString)
     if LibRNA.vrna_params_save(filename, LibRNA.VRNA_PARAMETER_FORMAT_DEFAULT) == 0
         error("error saving energy parameters to file $filename")
     end
 end
-# TODO
-# LibRNA.vrna_params_reset
-# LibRNA.vrna_params_subst
+
 
 """
     FoldCompound(seq::AbstractString; [options, params, temperature], [model_details...])
@@ -175,6 +249,12 @@ Model details (additional keyword arguments):
   ignored unless the `:window` option is set in the `FoldCompound`
   `options`. The default value for `window_size` is
   `$(Int(LibRNA.VRNA_MODEL_DEFAULT_WINDOW_SIZE))`.
+
+Global energy parameters used when constructing a `FoldCompound` can be changed with the following functions:
+`ViennaRNA.params_load`, `ViennaRNA.params_load_defaults`,
+`ViennaRNA.params_load_DNA_Mathews1999`, `ViennaRNA.params_load_DNA_Mathews2004`,
+`ViennaRNA.params_load_RNA_Andronescu2007`, `ViennaRNA.params_load_RNA_Langdon2018`,
+`ViennaRNA.params_load_RNA_Turner1999`, `ViennaRNA.params_load_RNA_Turner2004`.
 """
 mutable struct FoldCompound
     ptr         :: Ptr{LibRNA.vrna_fc_s}
