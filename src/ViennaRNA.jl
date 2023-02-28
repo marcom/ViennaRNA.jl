@@ -30,4 +30,11 @@ include("wrappers.jl")
 include("extras.jl")
 include("utils.jl")
 
+function __init__()
+    # otherwise the name of the default params is not set
+    # i.e., we would have FoldCompound("GAC").params_name == ""
+    # time cost is approx. 5ms
+    params_load_defaults()
+end
+
 end # module ViennaRNA

@@ -3,6 +3,39 @@ using ViennaRNA
 using ViennaRNA: LibRNA
 using Unitful
 
+@testset "params_{load*,save}"  begin
+    showtestset()
+    for (sym, loadfn, params_name) in [
+        (:RNA_Andronescu2007, ViennaRNA.params_load_RNA_Andronescu2007, "RNA - Andronescu 2007"),
+        (:RNA_Langdon2018, ViennaRNA.params_load_RNA_Langdon2018, "RNA - Langdon 2018"),
+        (:RNA_Turner1999, ViennaRNA.params_load_RNA_Turner1999, "RNA - Turner 1999"),
+        (:RNA_Turner2004, ViennaRNA.params_load_RNA_Turner2004, "RNA - Turner 2004"),
+        (:RNA_misc_special_hairpins, ViennaRNA.params_load_RNA_misc_special_hairpins, "RNA - Misc. Special Hairpins"),
+        (:DNA_Mathews1999, ViennaRNA.params_load_DNA_Mathews1999, "DNA - Mathews 1999"),
+        (:DNA_Mathews2004, ViennaRNA.params_load_DNA_Mathews2004, "DNA - Mathews 2004"),
+        (:defaults, ViennaRNA.params_load_defaults, "RNA - Turner 2004"),
+        ]
+
+        loadfn()
+        fc = FoldCompound("GGGAAACCC")
+        @test fc.params_name == params_name
+        finalize(fc)
+
+        if sym ∉ (:defaults, :RNA_misc_special_hairpins)
+            # ViennaRNA.params_load(sym) for sym ∈ [:defaults, :RNA_misc_special_hairpins] is not supported
+            ViennaRNA.params_load(sym)
+            fc = FoldCompound("GGGAAACCC")
+            @test fc.params_name == params_name
+            finalize(fc)
+        end
+    end
+    @test_throws ArgumentError ViennaRNA.params_load(:UNKNOWN_PARAMS_NAME)
+    # TODO
+    # params_load_from_string(str::AbstractString, name::AbstractString)
+    # params_load(filename::AbstractString)
+    # params_save(filename::AbstractString)
+end
+
 @testset "FoldCompound" begin
     showtestset()
     for s in ["GGGAAACCC",
@@ -39,10 +72,7 @@ using Unitful
         # options
         fc = FoldCompound(s; options=[:mfe])
         @test length(fc) == 9
-        # use different energy parameter sets
-        fc = FoldCompound(s; params=:RNA_Turner1999)
-        @test length(fc) == 9
-        @test_throws ArgumentError FoldCompound(s; params=:UNKNOWN_ENERGY_PARAMS)
+
         # use different temperatures to evaluate energies
         fc = FoldCompound(s; temperature=55u"°C")
         @test length(fc) == 9
@@ -100,13 +130,6 @@ using Unitful
         show(buf, MIME("text/plain"), fc)
         @test length(String(take!(buf))) > 0
     end
-
-    # DNA params
-    fc = FoldCompound("GATTACA"; params=:DNA_Mathews1999)
-    @test length(fc) == 7
-
-    # error on unknown params
-    @test_throws ArgumentError FoldCompound("GATTACA"; params=:UNKNOWN_PARAMS)
 
     # multiple strands
     fc = FoldCompound("GGG&AAA&CCC")
@@ -272,8 +295,14 @@ end
     @test_throws ArgumentError energy(fc, ".")
     @test_throws ArgumentError energy("(...)", ".")
     # test different energy parameter sets
-    @test energy(FoldCompound(seq; params=:RNA_Turner1999), str) ≈ -2.90u"kcal/mol" atol=1e-3u"kcal/mol"
-    @test energy(FoldCompound(seq; params=:RNA_Andronescu2007), str) ≈ -2.15u"kcal/mol" atol=1e-3u"kcal/mol"
+    # RNA_Turner1999
+    ViennaRNA.params_load_RNA_Turner1999()
+    @test energy(FoldCompound(seq), str) ≈ -2.90u"kcal/mol" atol=1e-3u"kcal/mol"
+    ViennaRNA.params_load_defaults()
+    # RNA_Andronescu2007
+    ViennaRNA.params_load_RNA_Andronescu2007()
+    @test energy(FoldCompound(seq), str) ≈ -2.15u"kcal/mol" atol=1e-3u"kcal/mol"
+    ViennaRNA.params_load_defaults()
     # test different temperatures
     @test energy(FoldCompound(seq; temperature=30u"°C"), str) ≈ -3.52u"kcal/mol" atol=1e-3u"kcal/mol"
     @test energy(FoldCompound(seq; temperature=37u"°C"), str) ≈ -2.90u"kcal/mol" atol=1e-3u"kcal/mol"

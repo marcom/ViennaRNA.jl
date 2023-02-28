@@ -50,6 +50,79 @@ const SAMPLE_STRUCTURES_OPTIONS = _makedict("VRNA_PBACKTRACK_")
 end # module Private
 import .Private
 
+# TODO: automate creation of params_load_(DNA|RNA)_* functions so it's
+#       always in sync with ViennaRNA
+function params_load_defaults()
+    if LibRNA.vrna_params_load_defaults() == 0
+        error("couldn't load params in params_load_defaults()")
+    end
+end
+function params_load_DNA_Mathews1999()
+    if LibRNA.vrna_params_load_DNA_Mathews1999() == 0
+        error("couldn't load params in params_load_DNA_Mathews1999()")
+    end
+end
+function params_load_DNA_Mathews2004()
+    if LibRNA.vrna_params_load_DNA_Mathews2004() == 0
+        error("couldn't load params in params_load_DNA_Mathews2004()")
+    end
+end
+function params_load_RNA_Andronescu2007()
+    if LibRNA.vrna_params_load_RNA_Andronescu2007() == 0
+        error("couldn't load params in params_load_RNA_Andronescu2007()")
+    end
+end
+function params_load_RNA_Langdon2018()
+    if LibRNA.vrna_params_load_RNA_Langdon2018() == 0
+        error("couldn't load params in params_load_RNA_Langdon2018()")
+    end
+end
+function params_load_RNA_Turner1999()
+    if LibRNA.vrna_params_load_RNA_Turner1999() == 0
+        error("couldn't load params in params_load_RNA_Turner1999()")
+    end
+end
+function params_load_RNA_Turner2004()
+    if LibRNA.vrna_params_load_RNA_Turner2004() == 0
+        error("couldn't load params in params_load_RNA_Turner2004()")
+    end
+end
+function params_load_RNA_misc_special_hairpins()
+    if LibRNA.vrna_params_load_RNA_misc_special_hairpins() == 0
+        error("couldn't load params in params_load_RNA_misc_special_hairpins()")
+    end
+end
+function params_load_from_string(str::AbstractString, name::AbstractString)
+    if LibRNA.vrna_params_load_from_string(str, name, LibRNA.VRNA_PARAMETER_FORMAT_DEFAULT) == 0
+        error("error loading energy parameters from string:\n$str")
+    end
+end
+function params_load(params::Symbol)
+    # TODO: support :defaults, :RNA_misc_special_hairpins
+    if ! haskey(Private.PARAMS_LOADFNS, params)
+        throw(ArgumentError("unknown energy parameter set $params, possible values are: " *
+            "$(sort(collect(keys(Private.PARAMS_LOADFNS))))"))
+    end
+    loadparams = Private.PARAMS_LOADFNS[params]
+    err = loadparams()
+    if err == 0
+        error("Failed to load energy parameters $params")
+    end
+    return nothing
+end
+function params_load(filename::AbstractString)
+    if LibRNA.vrna_params_load(filename, LibRNA.VRNA_PARAMETER_FORMAT_DEFAULT) == 0
+        error("error loading energy parameters from file $filename")
+    end
+end
+function params_save(filename::AbstractString)
+    if LibRNA.vrna_params_save(filename, LibRNA.VRNA_PARAMETER_FORMAT_DEFAULT) == 0
+        error("error saving energy parameters to file $filename")
+    end
+end
+# TODO
+# LibRNA.vrna_params_reset
+# LibRNA.vrna_params_subst
 
 """
     FoldCompound(seq::AbstractString; [options, params, temperature], [model_details...])
@@ -65,9 +138,6 @@ Input arguments:
    (alifold). A vector of sequences which may contain multiple
    strands, denoted by '&', and gap '-' characters
 - `options`: one or more of $(sort(collect(keys(Private.FOLDCOMPOUND_OPTIONS))))
-- `params`: energy parameter set, possible values are
-  `$(sort(collect(keys(Private.PARAMS_LOADFNS))))`. Default is
-  `:RNA_Turner2004`.
 - `temperature`: the temperature at which calculations are performed.
   Default is `37u"°C"`.
 
@@ -117,7 +187,6 @@ mutable struct FoldCompound
     function FoldCompound(msa::Vector{<:AbstractString};
                           model_details::Ptr{LibRNA.vrna_md_s}=Ptr{LibRNA.vrna_md_s}(C_NULL),
                           options::Vector{Symbol}=[:default],
-                          params::Symbol=:RNA_Turner2004,
                           temperature::Quantity=37.0u"°C",
                           # model_details options
                           circular::Bool=Bool(LibRNA.VRNA_MODEL_DEFAULT_CIRC),
@@ -147,15 +216,6 @@ mutable struct FoldCompound
         if any(x -> !haskey(Private.FOLDCOMPOUND_OPTIONS, x), options)
             throw(ArgumentError("unknown FoldCompound options: $(setdiff(options, keys(Private.FOLDCOMPOUND_OPTIONS))),"
                                 * " allowed values are: $(keys(Private.FOLDCOMPOUND_OPTIONS))"))
-        end
-        if ! haskey(Private.PARAMS_LOADFNS, params)
-            throw(ArgumentError("unknown energy parameters: $(params), allowed"
-                                * " values are: $(keys(Private.PARAMS_LOADFNS))"))
-        end
-        loadparams = Private.PARAMS_LOADFNS[params]
-        err = loadparams()
-        if err == 0
-            error("Failed to load energy parameters $params_name")
         end
         temperature_nounit = ustrip(uconvert(u"°C", temperature))
         LibRNA.vrna_md_defaults_temperature(temperature_nounit)
