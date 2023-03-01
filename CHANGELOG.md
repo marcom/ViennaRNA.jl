@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 0.10.0
+
+- Energy parameter sets are now changed by calling functions like
+  `ViennaRNA.params_load_RNA_Turner1999()` or
+  `ViennaRNA.params_load(:RNA_Turner1999)` that set global
+  variables. This more closely mirrors the ViennaRNA API and avoids
+  the costly reloading of energy parameters inside the
+  `FoldCompound()` constructor.  The global variables are copied by
+  ViennaRNA to a newly created `FoldCompound` when the
+  `FoldCompound()` constructor is called.  Previously, the kwarg
+  `param` when creating a `FoldCompound` was used to set the parameter
+  set.
+
+
 ## 0.9.0
 
 - `FoldCompound`: new properties `max_bp_span` and `window_size` that
