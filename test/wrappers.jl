@@ -3,7 +3,7 @@ using ViennaRNA
 using ViennaRNA: LibRNA
 using Unitful
 
-@testset "params_{load*,save}"  begin
+@testset "params_{load*,save}" begin
     showtestset()
     for (sym, loadfn, params_name) in [
         (:RNA_Andronescu2007, ViennaRNA.params_load_RNA_Andronescu2007, "RNA - Andronescu 2007"),
@@ -30,10 +30,42 @@ using Unitful
         end
     end
     @test_throws ArgumentError ViennaRNA.params_load(:UNKNOWN_PARAMS_NAME)
-    # TODO
+
     # params_load_from_string(str::AbstractString, name::AbstractString)
+    paramstr =
+        """
+        ## RNAfold parameter file v2.0
+
+        # stack
+        /*  CG    GC    GU    UG    AU    UA    @  */
+          -200  -300  -200   -50  -200  -200     0
+          -300  -300  -250   -50  -220  -200  -150
+          -200  -250   100   -50     0  -130   100
+           -50   -50   -50   -50   -50   -50   -50
+          -200  -200     0   -50  -110   -90   -60
+          -200  -200  -100   -50   -90  -130   -90
+             0  -150   100   -50   -60   -90   100
+        """
+    ViennaRNA.params_load_from_string(paramstr, "My test params")
+    fc = FoldCompound("GGGAAACCC")
+    @test fc.params_name == "My test params"
+    finalize(fc)
+
     # params_load(filename::AbstractString)
+    paramfile = joinpath(LibRNA.ViennaRNA_jll.artifact_dir, "share", "ViennaRNA", "rna_turner1999.par")
+    ViennaRNA.params_load(paramfile)
+    fc = FoldCompound("GGGAAACCC")
+    @test fc.params_name == "rna_turner1999.par"
+    finalize(fc)
+
     # params_save(filename::AbstractString)
+    mktemp() do path, _
+        ViennaRNA.params_save(path)
+        @test filesize(path) > 0
+    end
+
+    # load the default parameters again
+    ViennaRNA.params_load_defaults()
 end
 
 @testset "FoldCompound" begin
