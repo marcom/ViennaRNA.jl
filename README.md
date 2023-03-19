@@ -23,7 +23,7 @@ using ViennaRNA, Unitful
 The `Unitful` library is needed to be able to specify units with
 `@u_str`, e.g. `4u"kcal/mol"` or `37u"°C"`.  You can get the degree
 symbol `°` by typing `\degree` and pressing the TAB key in the REPL or
-in an editor with Julia syntax support
+in an editor with Julia syntax support.
 
 The original C API functions can be found in the submodule
 `ViennaRNA.LibRNA`.  Most functions can be called with a String
