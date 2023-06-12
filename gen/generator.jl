@@ -1,4 +1,9 @@
+#!/usr/bin/env julia
+
+import Pkg
+
 cd(@__DIR__)
+Pkg.activate(".")
 
 # Stack environment from parent dir on top of env from this dir.  This
 # is so we can import ViennaRNA_jll and always have the same version
@@ -12,8 +17,7 @@ import Clang
 using Clang.Generators
 using ViennaRNA_jll
 
-import Pkg
-pkgver(mod) = Pkg.TOML.parsefile(joinpath(pkgdir(mod), "Project.toml"))["version"]
+pkgver(mod::Module) = Pkg.TOML.parsefile(joinpath(pkgdir(mod), "Project.toml"))["version"]
 # this version can only deal with dependencies from the top active
 # environment, but not ones stacked below
 #pkgver(name) = filter(p -> p.name == name, collect(values(Pkg.dependencies()))) |> only |> p -> p.version
