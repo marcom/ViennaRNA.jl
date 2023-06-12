@@ -9,7 +9,7 @@ using CEnum
 
 # package versions used to generate this file
 const VERSION_GEN_Clang = v"0.17.6"
-const VERSION_GEN_ViennaRNA_jll = v"2.6.0+0"
+const VERSION_GEN_ViennaRNA_jll = v"2.6.1+0"
 
 
 """
