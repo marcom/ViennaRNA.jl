@@ -343,62 +343,66 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
     # Julia compiler can still constant-propagate through the desired
     # symbol (`sym` is a constant for most calls from the POV of the
     # caller of getproperty)
+
+    # Notes
+    # - must use getfield(fc, :uptr) here instead of fc.uptr,
+    #   otherwise JET complains
     if sym === :circular
-        return Bool(fc.uptr.params[].model_details.circ[])
+        return Bool(getfield(fc, :uptr).params[].model_details.circ[])
     elseif sym === :dangles
-        return Int(fc.uptr.params[].model_details.dangles[])
+        return Int(getfield(fc, :uptr).params[].model_details.dangles[])
     elseif sym === :gquadruplex
-        return Bool(fc.uptr.params[].model_details.gquad[])
+        return Bool(getfield(fc, :uptr).params[].model_details.gquad[])
     elseif sym === :has_matrices
-        fc.uptr.matrices[] != C_NULL
+        return getfield(fc, :uptr).matrices[] != C_NULL
     elseif sym === :has_exp_matrices
-        fc.uptr.exp_matrices[] != C_NULL
+        return getfield(fc, :uptr).exp_matrices[] != C_NULL
     elseif sym === :log_ML
-        return Bool(fc.uptr.params[].model_details.logML[])
+        return Bool(getfield(fc, :uptr).params[].model_details.logML[])
     elseif sym === :max_bp_span
-        return Int(fc.uptr.params[].model_details.max_bp_span[])
+        return Int(getfield(fc, :uptr).params[].model_details.max_bp_span[])
     elseif sym === :min_loop_size
-        return Int(fc.uptr.params[].model_details.min_loop_size[])
+        return Int(getfield(fc, :uptr).params[].model_details.min_loop_size[])
     elseif sym === :no_GU_basepairs
-        return Bool(fc.uptr.params[].model_details.noGU[])
+        return Bool(getfield(fc, :uptr).params[].model_details.noGU[])
     elseif sym === :no_GU_closure
-        return Bool(fc.uptr.params[].model_details.noGUclosure[])
+        return Bool(getfield(fc, :uptr).params[].model_details.noGUclosure[])
     elseif sym === :no_lonely_pairs
-        return Bool(fc.uptr.params[].model_details.noLP[])
+        return Bool(getfield(fc, :uptr).params[].model_details.noLP[])
     elseif sym === :nstrands
-        return Int(fc.uptr.strands[])
+        return Int(getfield(fc, :uptr).strands[])
     elseif sym === :params_name
-        return unsafe_string(reinterpret(Ptr{UInt8}, pointer(fc.uptr.params[].param_file)))
+        return unsafe_string(reinterpret(Ptr{UInt8}, pointer(getfield(fc, :uptr).params[].param_file)))
     elseif sym === :sequence
-        if fc.uptr.sequence[] == C_NULL
+        if getfield(fc, :uptr).sequence[] == C_NULL
             return nothing
         end
-        return unsafe_string(pointer(fc.uptr.sequence[]))
+        return unsafe_string(pointer(getfield(fc, :uptr).sequence[]))
     elseif sym === :special_hairpins
-        return Bool(fc.uptr.params[].model_details.special_hp[])
+        return Bool(getfield(fc, :uptr).params[].model_details.special_hp[])
     elseif sym === :temperature
-        par_temperature = fc.uptr.params[].temperature[]
-        md_temperature = fc.uptr.params[].model_details.temperature[]
+        par_temperature = getfield(fc, :uptr).params[].temperature[]
+        md_temperature = getfield(fc, :uptr).params[].model_details.temperature[]
         if par_temperature != md_temperature
             error("params temperature and model_details temperature don't agree: $par_temperature != $md_temperature")
         end
         return par_temperature * Private.unit_temperature
     elseif sym === :type
-        return Private.FOLDCOMPOUND_TYPE_C2JL[fc.uptr.type[]]
+        return Private.FOLDCOMPOUND_TYPE_C2JL[getfield(fc, :uptr).type[]]
     elseif sym === :uniq_ML
-        return Bool(fc.uptr.params[].model_details.uniq_ML[])
+        return Bool(getfield(fc, :uptr).params[].model_details.uniq_ML[])
     elseif sym === :window_size
-        return Int(fc.uptr.params[].model_details.window_size[])
+        return Int(getfield(fc, :uptr).params[].model_details.window_size[])
     # matrices_{c,fML,fM1,f5,f3,fM2,Fc,FcH,FcI,FcM}
     elseif startswith(String(sym), "matrices_")
         fc.has_matrices || begin
-            @warn "no information stored yet, run mfe() first (fc.uptr.matrices[] == C_NULL)"
+            @warn "no information stored yet, run mfe() first (getfield(fc, :uptr).matrices[] == C_NULL)"
             return nothing
         end
-        mat = fc.uptr.matrices[]
+        mat = getfield(fc, :uptr).matrices[]
         realsym = Symbol(last(split(string(sym), '_')))
         if realsym ∈ (:c, :fML, :fM1)
-            jindx = fc.uptr.jindx[]
+            jindx = getfield(fc, :uptr).jindx[]
             return unsafe_loadmat(fc, getproperty(mat, realsym)[];
                                   indexfn=(i,j)->jindx[j + 1] + i + 1)
         elseif realsym ∈ (:f5, :f3, :fM2)
@@ -411,17 +415,17 @@ function Base.getproperty(fc::FoldCompound, sym::Symbol)
     # exp_matrices_{q,qb,qm,qm1,probs,qm2,expMLbase,scale}
     elseif startswith(String(sym), "exp_matrices_")
         fc.has_exp_matrices || begin
-            @warn "no information stored yet, run partfn() first (fc.uptr.exp_matrices[] == C_NULL)"
+            @warn "no information stored yet, run partfn() first (getfield(fc, :uptr).exp_matrices[] == C_NULL)"
             return nothing
         end
-        expmat = fc.uptr.exp_matrices[]
+        expmat = getfield(fc, :uptr).exp_matrices[]
         realsym = Symbol(last(split(string(sym), '_')))
         if realsym ∈ (:q, :qb, :qm, :probs)
-            iindx = fc.uptr.iindx[]
+            iindx = getfield(fc, :uptr).iindx[]
             return unsafe_loadmat(fc, getproperty(expmat, realsym)[];
                                   indexfn=(i,j)->iindx[i + 1] - j + 1)
         elseif realsym ∈ (:qm1,)
-            jindx = fc.uptr.jindx[]
+            jindx = getfield(fc, :uptr).jindx[]
             return unsafe_loadmat(fc, getproperty(expmat, realsym)[];
                                   indexfn=(i,j)->jindx[j + 1] + i + 1)
         elseif realsym ∈ (:qm2, :expMLbase, :scale)
