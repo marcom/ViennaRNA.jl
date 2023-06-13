@@ -6,6 +6,7 @@ showtestset() = println(" "^(2 * Test.get_testset_depth()), "testing ",
 
 @testset verbose=true "ViennaRNA" begin
     showtestset()
+    include("aqua.jl")
     include("wrappers.jl")
     include("extras.jl")
 end
