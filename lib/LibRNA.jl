@@ -9,7 +9,7 @@ using CEnum
 
 # package versions used to generate this file
 const VERSION_GEN_Clang = v"0.17.6"
-const VERSION_GEN_ViennaRNA_jll = v"2.6.1+0"
+const VERSION_GEN_ViennaRNA_jll = v"2.6.1+1"
 
 
 """
@@ -3724,7 +3724,7 @@ size_t vrna_sc_multi_cb_add(vrna_fold_compound_t *fc, vrna_sc_direct_f cb, vrna_
 ```
 """
 function vrna_sc_multi_cb_add(fc, cb, cb_exp, data, free_data, decomp_type)
-    ccall((:vrna_sc_multi_cb_add, libRNA), Cint, (Ptr{vrna_fold_compound_t}, vrna_sc_direct_f, vrna_sc_exp_direct_f, Ptr{Cvoid}, vrna_auxdata_free_f, Cuint), fc, cb, cb_exp, data, free_data, decomp_type)
+    ccall((:vrna_sc_multi_cb_add, libRNA), Csize_t, (Ptr{vrna_fold_compound_t}, vrna_sc_direct_f, vrna_sc_exp_direct_f, Ptr{Cvoid}, vrna_auxdata_free_f, Cuint), fc, cb, cb_exp, data, free_data, decomp_type)
 end
 
 """
