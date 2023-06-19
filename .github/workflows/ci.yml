@@ -23,17 +23,8 @@ jobs:
         os:
           - ubuntu-latest
           - macOS-latest
-          - windows-latest
         arch:
           - x64
-      matrix:
-        version:
-          - '1.6'
-          - '1'
-        os:
-          - ubuntu-latest
-          - macOS-latest
-        arch:
           - aarch64
     steps:
       - uses: actions/checkout@v2
