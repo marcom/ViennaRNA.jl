@@ -477,33 +477,55 @@ end
 
 @testset "plot_coords" begin
     showtestset()
-    function test_plot_xy(s, x, y)
+    function test_plot(s::AbstractString, plot_type::Union{Nothing,Symbol}=nothing)
+        x, y = isnothing(plot_type) ? plot_coords(s) : plot_coords(s; plot_type)
         @test x isa Vector{Float32}
         @test length(x) == length(s)
         @test y isa Vector{Float32}
         @test length(y) == length(s)
     end
-    s = "(((...)))"
-    pt = Pairtable(s)
+    function test_plot(pt::Pairtable, plot_type::Union{Nothing,Symbol}=nothing)
+        x, y = isnothing(plot_type) ? plot_coords(pt) : plot_coords(pt; plot_type)
+        @test x isa Vector{Float32}
+        @test length(x) == length(pt)
+        @test y isa Vector{Float32}
+        @test length(y) == length(pt)
+    end
 
     # test: plot_coords(::String), plot_coords(::Pairtable)
-    x, y = plot_coords(s)
-    test_plot_xy(s, x, y)
-    x, y = plot_coords(pt)
-    test_plot_xy(pt, x, y)
-    for plot_type in keys(ViennaRNA.Private.PLOT_COORDS_PLOT_TYPE)
-        x, y = plot_coords(s; plot_type)
-        test_plot_xy(s, x, y)
-        x, y = plot_coords(pt; plot_type)
-        test_plot_xy(pt, x, y)
+    for s in [".", "(((...)))", "(((..)).((..).))(...).."]
+        pt = Pairtable(s)
+        test_plot(s)
+        test_plot(pt)
+        for plot_type in keys(ViennaRNA.Private.PLOT_COORDS_PLOT_TYPE)
+            test_plot(s, plot_type)
+            test_plot(pt, plot_type)
+        end
     end
-    @test_throws ArgumentError x, y = plot_coords(s; plot_type = :unknown_plot_type)
-    @test_throws ArgumentError x, y = plot_coords(pt; plot_type = :unknown_plot_type)
+    @test_throws ArgumentError x, y = plot_coords("(...)"; plot_type = :unknown_plot_type)
+    @test_throws ArgumentError x, y = plot_coords(Pairtable("(...)"); plot_type = :unknown_plot_type)
+
     # zero-sized inputs
-    x, y = plot_coords("")
-    test_plot_xy("", x, y)
-    x, y = plot_coords(Pairtable(""))
-    test_plot_xy(Pairtable(""), x, y)
+    let s = "", pt = Pairtable(s)
+        for plot_type in keys(ViennaRNA.Private.PLOT_COORDS_PLOT_TYPE)
+            test_plot(s, plot_type)
+            test_plot(pt, plot_type)
+        end
+    end
+
+    # test zero-length hairpins
+    for s in ["()", "(())", "()()", "(()())"]
+        pt = Pairtable(s)
+        for plot_type in keys(ViennaRNA.Private.PLOT_COORDS_PLOT_TYPE)
+            if plot_type ∉ (:default, :turtle, :puzzler)
+                test_plot(s, plot_type)
+                test_plot(pt, plot_type)
+            else
+                @test_throws ArgumentError x, y = plot_coords(s; plot_type)
+                @test_throws ArgumentError x, y = plot_coords(pt; plot_type)
+            end
+        end
+    end
 end
 
 @testset "prob_of_structure" begin

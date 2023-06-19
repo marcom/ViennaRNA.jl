@@ -1034,6 +1034,8 @@ function plot_coords(structure::Union{AbstractString,Pairtable};
         LibRNA.vrna_plot_coords(structure, cx, cy, type)
     _vrna_plot_coords(structure::Pairtable, cx, cy, type) =
         LibRNA.vrna_plot_coords_pt(structure.ptr, cx, cy, type)
+    has_zero_len_hairpin(structure::AbstractString) = contains(structure, "()")
+    has_zero_len_hairpin(pt::Pairtable) = any(i -> pt[i] == i + 1, 1:length(pt)-1)
 
     if length(structure) == 0
         return Float32[], Float32[]
@@ -1042,8 +1044,13 @@ function plot_coords(structure::Union{AbstractString,Pairtable};
         throw(ArgumentError("unknown plot_type $plot_type, options are: " *
             "$(keys(Private.PLOT_COORDS_PLOT_TYPE))"))
     end
-    type = Private.PLOT_COORDS_PLOT_TYPE[plot_type]
 
+    if plot_type ∈ (:default, :turtle, :puzzler) && has_zero_len_hairpin(structure)
+        # LibRNA.vrna_plot_coords crashes/hangs in this case
+        throw(ArgumentError("Cannot handle zero-length hairpins for plot_type $plot_type"))
+    end
+
+    type = Private.PLOT_COORDS_PLOT_TYPE[plot_type]
     ptr_cx = Ptr{Ptr{Cfloat}}(LibRNA.vrna_alloc(sizeof(Ptr{Cfloat})))
     ptr_cy = Ptr{Ptr{Cfloat}}(LibRNA.vrna_alloc(sizeof(Ptr{Cfloat})))
     n = _vrna_plot_coords(structure, ptr_cx, ptr_cy, type)
