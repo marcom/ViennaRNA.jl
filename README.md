@@ -1,6 +1,7 @@
 # Julia interface to the ViennaRNA library
 
 [![Build Status](https://github.com/marcom/ViennaRNA.jl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/marcom/ViennaRNA.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
 Unofficial Julia interface to the
 [ViennaRNA](https://github.com/ViennaRNA/ViennaRNA) library for RNA
