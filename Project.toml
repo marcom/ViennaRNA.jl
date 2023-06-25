@@ -13,7 +13,7 @@ ViennaRNA_jll = "b7a990de-7fa3-5a2e-8a39-d875e4dafecd"
 CEnum = "0.4"
 Unitful = "1.9"
 UnsafePointers = "1"
-ViennaRNA_jll = "= 2.6.1"
+ViennaRNA_jll = "= 2.6.2"
 julia = "1.6"
 
 [extras]
