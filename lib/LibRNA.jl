@@ -9,7 +9,7 @@ using CEnum
 
 # package versions used to generate this file
 const VERSION_GEN_Clang = v"0.17.6"
-const VERSION_GEN_ViennaRNA_jll = v"2.6.1+1"
+const VERSION_GEN_ViennaRNA_jll = v"2.6.2+0"
 
 
 """
@@ -2299,6 +2299,9 @@ of the secondary structure (Partition function variant, i.e. contributions must 
 """
 const vrna_sc_exp_f = Ptr{Cvoid}
 
+# typedef int ( * vrna_auxdata_prepare_f ) ( vrna_fold_compound_t * fc , void * data , unsigned int event , void * event_data )
+const vrna_auxdata_prepare_f = Ptr{Cvoid}
+
 """
     vrna_sc_s
 
@@ -2324,6 +2327,7 @@ struct vrna_sc_s
     bt::vrna_sc_bt_f
     exp_f::vrna_sc_exp_f
     data::Ptr{Cvoid}
+    prepare_data::vrna_auxdata_prepare_f
     free_data::vrna_auxdata_free_f
 end
 
@@ -3448,11 +3452,11 @@ end
 
 ### Prototype
 ```c
-void vrna_sc_prepare(vrna_fold_compound_t *fc, unsigned int options);
+int vrna_sc_prepare(vrna_fold_compound_t *fc, unsigned int options);
 ```
 """
 function vrna_sc_prepare(fc, options)
-    ccall((:vrna_sc_prepare, libRNA), Cvoid, (Ptr{vrna_fold_compound_t}, Cuint), fc, options)
+    ccall((:vrna_sc_prepare, libRNA), Cint, (Ptr{vrna_fold_compound_t}, Cuint), fc, options)
 end
 
 """
@@ -3676,6 +3680,19 @@ function vrna_sc_add_data(fc, data, free_data)
 end
 
 """
+    vrna_sc_add_auxdata(fc, data, prepare_cb, free_cb)
+
+
+### Prototype
+```c
+int vrna_sc_add_auxdata(vrna_fold_compound_t *fc, void *data, vrna_auxdata_prepare_f prepare_cb, vrna_auxdata_free_f free_cb);
+```
+"""
+function vrna_sc_add_auxdata(fc, data, prepare_cb, free_cb)
+    ccall((:vrna_sc_add_auxdata, libRNA), Cint, (Ptr{vrna_fold_compound_t}, Ptr{Cvoid}, vrna_auxdata_prepare_f, vrna_auxdata_free_f), fc, data, prepare_cb, free_cb)
+end
+
+"""
     vrna_sc_add_data_comparative(fc, data, free_data)
 
 
@@ -3715,16 +3732,16 @@ function vrna_sc_add_f(fc, f)
 end
 
 """
-    vrna_sc_multi_cb_add(fc, cb, cb_exp, data, free_data, decomp_type)
+    vrna_sc_multi_cb_add(fc, cb, cb_exp, data, prepare_cb, free_cb, decomp_type)
 
 
 ### Prototype
 ```c
-size_t vrna_sc_multi_cb_add(vrna_fold_compound_t *fc, vrna_sc_direct_f cb, vrna_sc_exp_direct_f cb_exp, void *data, vrna_auxdata_free_f free_data, unsigned int decomp_type);
+size_t vrna_sc_multi_cb_add(vrna_fold_compound_t *fc, vrna_sc_direct_f cb, vrna_sc_exp_direct_f cb_exp, void *data, vrna_auxdata_prepare_f prepare_cb, vrna_auxdata_free_f free_cb, unsigned int decomp_type);
 ```
 """
-function vrna_sc_multi_cb_add(fc, cb, cb_exp, data, free_data, decomp_type)
-    ccall((:vrna_sc_multi_cb_add, libRNA), Csize_t, (Ptr{vrna_fold_compound_t}, vrna_sc_direct_f, vrna_sc_exp_direct_f, Ptr{Cvoid}, vrna_auxdata_free_f, Cuint), fc, cb, cb_exp, data, free_data, decomp_type)
+function vrna_sc_multi_cb_add(fc, cb, cb_exp, data, prepare_cb, free_cb, decomp_type)
+    ccall((:vrna_sc_multi_cb_add, libRNA), Csize_t, (Ptr{vrna_fold_compound_t}, vrna_sc_direct_f, vrna_sc_exp_direct_f, Ptr{Cvoid}, vrna_auxdata_prepare_f, vrna_auxdata_free_f, Cuint), fc, cb, cb_exp, data, prepare_cb, free_cb, decomp_type)
 end
 
 """
@@ -12197,7 +12214,7 @@ const VRNA_CONSTRAINT_FILE = 0
 
 const VRNA_CONSTRAINT_SOFT_MFE = 0
 
-const VRNA_OPTION_PF = Cuint(2)
+const VRNA_OPTION_PF = 1 << 1
 
 const VRNA_CONSTRAINT_SOFT_PF = VRNA_OPTION_PF
 
@@ -12301,10 +12318,6 @@ const VRNA_CONSTRAINT_CONTEXT_ENCLOSED_LOOPS = Cuchar(VRNA_CONSTRAINT_CONTEXT_IN
 
 const VRNA_CONSTRAINT_CONTEXT_ALL_LOOPS = Cuchar(VRNA_CONSTRAINT_CONTEXT_CLOSING_LOOPS | VRNA_CONSTRAINT_CONTEXT_ENCLOSED_LOOPS)
 
-const VRNA_CONSTRAINT_WINDOW_UPDATE_5 = Cuint(1)
-
-const VRNA_CONSTRAINT_WINDOW_UPDATE_3 = Cuint(2)
-
 const VRNA_BRACKETS_ALPHA = Cuint(4)
 
 const VRNA_BRACKETS_RND = Cuint(8)
@@ -12383,13 +12396,21 @@ const VRNA_STATUS_PF_POST = Cuchar(4)
 
 const VRNA_OPTION_DEFAULT = Cuint(0)
 
-const VRNA_OPTION_MFE = Cuint(1)
+const VRNA_OPTION_MFE = 1 << 0
 
-const VRNA_OPTION_HYBRID = Cuint(4)
+const VRNA_OPTION_HYBRID = 1 << 2
 
-const VRNA_OPTION_EVAL_ONLY = Cuint(8)
+const VRNA_OPTION_EVAL_ONLY = 1 << 3
 
-const VRNA_OPTION_WINDOW = Cuint(16)
+const VRNA_OPTION_WINDOW = 1 << 4
+
+const VRNA_OPTION_F5 = 1 << 5
+
+const VRNA_OPTION_F3 = 1 << 6
+
+const VRNA_OPTION_WINDOW_F5 = VRNA_OPTION_WINDOW | VRNA_OPTION_F5
+
+const VRNA_OPTION_WINDOW_F3 = VRNA_OPTION_WINDOW | VRNA_OPTION_F3
 
 const VRNA_NEIGHBOR_CHANGE = 1
 
