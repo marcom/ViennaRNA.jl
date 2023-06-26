@@ -14,7 +14,7 @@ Aqua = "0.6"
 CEnum = "0.4"
 Unitful = "1.9"
 UnsafePointers = "1"
-ViennaRNA_jll = "= 2.5.1"
+ViennaRNA_jll = "= 2.6.2"
 julia = "1.6"
 
 [extras]
