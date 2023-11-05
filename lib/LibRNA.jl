@@ -10,7 +10,7 @@ using CEnum
 
 # package versions used to generate this file
 const VERSION_GEN_Clang = v"0.17.6"
-const VERSION_GEN_ViennaRNA_jll = v"2.6.2+0"
+const VERSION_GEN_ViennaRNA_jll = v"2.6.4+0"
 
 #### end prologue.jl
 
@@ -2009,13 +2009,10 @@ struct vrna_structured_domains_s
 end
 
 """
- @addtogroup domains_struc
+ @file structured_domains.h
+ @ingroup domains_struc
 
- @brief  Add and modify structured domains to the RNA folding grammar
-
- This module provides the tools to add and modify structured domains to the production rules of the RNA folding grammar.
- Usually this functionality is utilized for incorporating self-enclosed structural modules that exhibit a more or less
- complex base pairing pattern.
+ @brief  This module provides interfaces that deal with additional structured domains in the folding grammar.
 """
 const vrna_sd_t = vrna_structured_domains_s
 
@@ -2993,7 +2990,7 @@ const vrna_hc_up_t = vrna_hc_up_s
  user has to specify, which characters are allowed to be interpreted as
  constraints by passing the corresponding options via the third parameter.
 
- @ingroup  constraints
+ @ingroup  hard_constraints
 
  The following is an example for adding hard constraints given in
  pseudo dot-bracket notation. Here, @p fc is the #vrna_fold_compound_t object,
@@ -4292,7 +4289,7 @@ end
  In contrast to vrna_ptable() this function also recognizes the base pairs
  denoted by '[' and ']' brackets. Thus, this function behaves like
  @code{.c}
- vrna_ptable_from_string(structure, #VRNA_BRACKETS_RND | VRNA_BRACKETS_SQR)
+ vrna_ptable_from_string(structure, VRNA_BRACKETS_RND | VRNA_BRACKETS_SQR)
  @endcode
 
  @see    vrna_ptable_from_string()
@@ -4457,7 +4454,7 @@ end
  @brief  Convert a secondary structure in dot-bracket notation to its abstract shapes representation
 
  This function converts a secondary structure into its abstract shapes representation as
- presented by Giegerich et al. 2004 @cite giegerich:2004.
+ presented by @rstinline :cite:t:`giegerich:2004` @endrst.
 
  @see vrna_abstract_shapes_pt()
 
@@ -4479,7 +4476,7 @@ end
  @brief  Convert a secondary structure to its abstract shapes representation
 
  This function converts a secondary structure into its abstract shapes representation as
- presented by Giegerich et al. 2004 @cite giegerich:2004. This function is equivalent to
+ presented by @rstinline :cite:t:`giegerich:2004` @endrst. This function is equivalent to
  vrna_db_to_shapes(), but requires a pair table input instead of a dot-bracket structure.
 
  @note   The length of the structure must be present at @p pt[0]!
@@ -4706,13 +4703,13 @@ end
  Currently we support conversion into the following formats, denoted by the value
  of parameter @p type:
  * #VRNA_STRUCTURE_TREE_HIT            - @copybrief #VRNA_STRUCTURE_TREE_HIT
-                                         (See also Fontana et al. 1993 @cite fontana:1993b)
+                                         (See also @rstinline :cite:t:`fontana:1993b` @endrst)
  * #VRNA_STRUCTURE_TREE_SHAPIRO_SHORT  - @copybrief #VRNA_STRUCTURE_TREE_SHAPIRO_SHORT
-                                         (same as Shapiro 1988 @cite shapiro:1988, but with root node @p R and without @p S nodes for the stems)
+                                         (same as @rstinline :cite:t:`shapiro:1988` @endrst, but with root node @p R and without @p S nodes for the stems)
  * #VRNA_STRUCTURE_TREE_SHAPIRO        - @copybrief #VRNA_STRUCTURE_TREE_SHAPIRO
-                                         (See also Shapiro 1988 @cite shapiro:1988)
+                                         (See also @rstinline :cite:t:`shapiro:1988` @endrst)
  * #VRNA_STRUCTURE_TREE_SHAPIRO_EXT    - @copybrief #VRNA_STRUCTURE_TREE_SHAPIRO_EXT
-                                         (same as Shapiro 1988 @cite shapiro:1988, but external nodes denoted as @p E )
+                                         (same as @rstinline :cite:t:`shapiro:1988` @endrst, but external nodes denoted as @p E )
  * #VRNA_STRUCTURE_TREE_SHAPIRO_WEIGHT - @copybrief #VRNA_STRUCTURE_TREE_SHAPIRO_WEIGHT
                                          (same as #VRNA_STRUCTURE_TREE_SHAPIRO_EXT but with additional weights
                                          for number of unpaired nucleotides in loop, and number of pairs in stems)
@@ -4738,7 +4735,7 @@ end
  @brief  Remove weights from a linear string tree representation of a secondary structure
 
  This function strips the weights of a linear string tree representation such as @p HIT,
- or Coarse Grained Tree sensu Shapiro @cite shapiro:1988
+ or Coarse Grained Tree sensu @rstinline :cite:t:`shapiro:1988` @endrst
 
  @see vrna_db_to_tree_string()
 
@@ -5256,16 +5253,14 @@ end
  they specify exterior loops (@p F production rule), hairpin loops and interior loops
  (@p C production rule), and multibranch loops (@p M and @p M1 production rule).
 
- @image html   ligands_up_callback.svg
- @image latex  ligands_up_callback.eps
+ @image xml ligands_up_callback.svg
 
  The @p pre_cb callback will be executed as a pre-processing step right before the
  regular secondary structure rules. Usually one would use this callback to fill the
  dynamic programming matrices @p U and preparations of the auxiliary data structure
  #vrna_unstructured_domain_s.data
 
- @image html   B_prod_rule.svg
- @image latex  B_prod_rule.eps
+ @image xml B_prod_rule.svg
 
  @ingroup domains_up
 
@@ -5292,11 +5287,9 @@ end
  matrices and/or prepare the #vrna_unstructured_domain_s.data, and (ii) provide a callback
  to retrieve partition functions for subsegments @f\$ [i,j] @f\$.
 
- @image html   B_prod_rule.svg
- @image latex  B_prod_rule.eps
+ @image xml   B_prod_rule.svg
 
- @image html   ligands_up_callback.svg
- @image latex  ligands_up_callback.eps
+ @image xml   ligands_up_callback.svg
 
  @ingroup domains_up
 
@@ -7843,7 +7836,7 @@ end
  - A new neighbor move becomes available (#VRNA_NEIGHBOR_NEW)
 
  @see  vrna_move_neighbor_diff(), #VRNA_NEIGHBOR_CHANGE, #VRNA_NEIGHBOR_INVALID, #VRNA_NEIGHBOR_NEW,
-       #vrna_move_update_f
+       #vrna_move_update_f, #VRNA_MOVE_NO_APPLY
 
  @param  fc        A fold compound for the RNA sequence(s) that this function operates on
  @param  ptable    The current structure as pair table
@@ -8076,7 +8069,7 @@ end
  matrices are not available any more for any post-processing, e.g. suboptimal backtracking, etc.
 
  Folding of circular RNA sequences is handled as a post-processing step of the forward
- recursions. See @cite hofacker:2006 for further details.
+ recursions. See @rstinline :cite:t:`hofacker:2006` @endrst for further details.
 
  @note In case you want to use the filled DP matrices for any subsequent post-processing step, or
        you require other conditions than specified by the default model details, use vrna_mfe(),
@@ -8141,7 +8134,7 @@ end
  backtracking, etc.
 
  Folding of circular RNA sequences is handled as a post-processing step of the forward
- recursions. See @cite hofacker:2006 for further details.
+ recursions. See @rstinline :cite:t:`hofacker:2006` @endrst for further details.
 
  @note In case you want to use the filled DP matrices for any subsequent post-processing step, or
        you require other conditions than specified by the default model details, use vrna_mfe(),
@@ -9001,8 +8994,8 @@ end
  thermodynamic temperature @f\$ T @f\$.
 
  Using the @p options flag one can switch between regular (#VRNA_PBACKTRACK_DEFAULT) backtracing
- mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of Michalik
- et al. 2017 @cite michalik:2017.
+ mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of
+ @rstinline :cite:t:`michalik:2017` @endrst.
 
  @pre    Unique multiloop decomposition has to be active upon creation of @p fc with vrna_fold_compound()
          or similar. This can be done easily by passing vrna_fold_compound() a model details parameter
@@ -9057,8 +9050,8 @@ end
  thermodynamic temperature @f\$ T @f\$.
 
  Using the @p options flag one can switch between regular (#VRNA_PBACKTRACK_DEFAULT) backtracing
- mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of Michalik
- et al. 2017 @cite michalik:2017.
+ mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of
+ @rstinline :cite:t:`michalik:2017` @endrst.
 
  In contrast to vrna_pbacktrack5() and vrna_pbacktrack5_num() this function yields the
  structure samples through a callback mechanism.
@@ -9118,8 +9111,8 @@ end
  thermodynamic temperature @f\$ T @f\$.
 
  Using the @p options flag one can switch between regular (#VRNA_PBACKTRACK_DEFAULT) backtracing
- mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of Michalik
- et al. 2017 @cite michalik:2017.
+ mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of
+ @rstinline :cite:t:`michalik:2017` @endrst.
 
  In contrast to vrna_pbacktrack5_cb() this function allows for resuming a previous
  sampling round in specialized Boltzmann sampling, such as non-redundant backtracking.
@@ -9204,8 +9197,8 @@ end
  thermodynamic temperature @f\$ T @f\$.
 
  Using the @p options flag one can switch between regular (#VRNA_PBACKTRACK_DEFAULT) backtracing
- mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of Michalik
- et al. 2017 @cite michalik:2017.
+ mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of
+ @rstinline :cite:t:`michalik:2017` @endrst.
 
  In contrast to vrna_pbacktrack5_resume() this function yields the structure samples
  through a callback mechanism.
@@ -9331,8 +9324,8 @@ end
  thermodynamic temperature @f\$ T @f\$.
 
  Using the @p options flag one can switch between regular (#VRNA_PBACKTRACK_DEFAULT) backtracing
- mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of Michalik
- et al. 2017 @cite michalik:2017.
+ mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of
+ @rstinline :cite:t:`michalik:2017` @endrst.
 
  @pre    Unique multiloop decomposition has to be active upon creation of @p fc with vrna_fold_compound()
          or similar. This can be done easily by passing vrna_fold_compound() a model details parameter
@@ -9385,8 +9378,8 @@ end
  thermodynamic temperature @f\$ T @f\$.
 
  Using the @p options flag one can switch between regular (#VRNA_PBACKTRACK_DEFAULT) backtracing
- mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of Michalik
- et al. 2017 @cite michalik:2017.
+ mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of
+ @rstinline :cite:t:`michalik:2017` @endrst.
 
  In contrast to vrna_pbacktrack() and vrna_pbacktrack_num() this function yields the
  structure samples through a callback mechanism.
@@ -9444,8 +9437,8 @@ end
  thermodynamic temperature @f\$ T @f\$.
 
  Using the @p options flag one can switch between regular (#VRNA_PBACKTRACK_DEFAULT) backtracing
- mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of Michalik
- et al. 2017 @cite michalik:2017.
+ mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of
+ @rstinline :cite:t:`michalik:2017` @endrst.
 
  In contrast to vrna_pbacktrack_cb() this function allows for resuming a previous
  sampling round in specialized Boltzmann sampling, such as non-redundant backtracking.
@@ -9526,8 +9519,8 @@ end
  thermodynamic temperature @f\$ T @f\$.
 
  Using the @p options flag one can switch between regular (#VRNA_PBACKTRACK_DEFAULT) backtracing
- mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of Michalik
- et al. 2017 @cite michalik:2017.
+ mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of
+ @rstinline :cite:t:`michalik:2017` @endrst.
 
  In contrast to vrna_pbacktrack5_resume() this function yields the structure samples
  through a callback mechanism.
@@ -9656,8 +9649,8 @@ end
  thermodynamic temperature @f\$ T @f\$.
 
  Using the @p options flag one can switch between regular (#VRNA_PBACKTRACK_DEFAULT) backtracing
- mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of Michalik
- et al. 2017 @cite michalik:2017.
+ mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of
+ @rstinline :cite:t:`michalik:2017` @endrst.
 
  @pre    Unique multiloop decomposition has to be active upon creation of @p fc with vrna_fold_compound()
          or similar. This can be done easily by passing vrna_fold_compound() a model details parameter
@@ -9713,8 +9706,8 @@ end
  thermodynamic temperature @f\$ T @f\$.
 
  Using the @p options flag one can switch between regular (#VRNA_PBACKTRACK_DEFAULT) backtracing
- mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of Michalik
- et al. 2017 @cite michalik:2017.
+ mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of
+ @rstinline :cite:t:`michalik:2017` @endrst.
 
  In contrast to vrna_pbacktrack5() and vrna_pbacktrack5_num() this function yields the
  structure samples through a callback mechanism.
@@ -9775,8 +9768,8 @@ end
  thermodynamic temperature @f\$ T @f\$.
 
  Using the @p options flag one can switch between regular (#VRNA_PBACKTRACK_DEFAULT) backtracing
- mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of Michalik
- et al. 2017 @cite michalik:2017.
+ mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of
+ @rstinline :cite:t:`michalik:2017` @endrst.
 
  In contrast to vrna_pbacktrack5_cb() this function allows for resuming a previous
  sampling round in specialized Boltzmann sampling, such as non-redundant backtracking.
@@ -9862,8 +9855,8 @@ end
  thermodynamic temperature @f\$ T @f\$.
 
  Using the @p options flag one can switch between regular (#VRNA_PBACKTRACK_DEFAULT) backtracing
- mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of Michalik
- et al. 2017 @cite michalik:2017.
+ mode, and non-redundant sampling (#VRNA_PBACKTRACK_NON_REDUNDANT) along the lines of
+ @rstinline :cite:t:`michalik:2017` @endrst.
 
  In contrast to vrna_pbacktrack5_resume() this function yields the structure samples
  through a callback mechanism.
@@ -10088,7 +10081,7 @@ end
        and the data structure #vrna_fold_compound_t instead.
 
  Folding of circular RNA sequences is handled as a post-processing step of the forward
- recursions. See @cite hofacker:2006 for further details.
+ recursions. See @rstinline :cite:t:`hofacker:2006` @endrst for further details.
 
  @see vrna_pf_fold(), vrna_pf(), vrna_fold_compound(), #vrna_fold_compound_t
 
@@ -10153,7 +10146,7 @@ end
        and the data structure #vrna_fold_compound_t instead.
 
  Folding of circular RNA sequences is handled as a post-processing step of the forward
- recursions. See @cite hofacker:2006 for further details.
+ recursions. See @rstinline :cite:t:`hofacker:2006` @endrst for further details.
 
  @see vrna_pf_alifold(), vrna_pf(), vrna_fold_compound_comparative(), #vrna_fold_compound_t
 
@@ -10740,7 +10733,7 @@ const vrna_plot_layout_t = vrna_plot_layout_s
 """
     vrna_plot_coords_turtle(structure, x, y, arc_coords)
 
- @brief Compute nucleotide coordinates for secondary structure plot using the <i>RNAturtle</i> algorithm @cite wiegreffe:2018
+ @brief Compute nucleotide coordinates for secondary structure plot using the <i>RNAturtle</i> algorithm @rstinline :cite:p:`wiegreffe:2018` @endrst
 
  This function basically is a wrapper to vrna_plot_coords() that passes the @p plot_type #VRNA_PLOT_TYPE_TURTLE.
 
@@ -10785,7 +10778,7 @@ end
 """
     vrna_plot_coords_turtle_pt(pair_table, x, y, arc_coords)
 
- @brief Compute nucleotide coordinates for secondary structure plot using the <i>RNAturtle</i> algorithm @cite wiegreffe:2018
+ @brief Compute nucleotide coordinates for secondary structure plot using the <i>RNAturtle</i> algorithm @rstinline :cite:p:`wiegreffe:2018` @endrst
 
  Same as vrna_plot_coords_turtle() but takes a pair table with the structure
  information as input.
@@ -10835,7 +10828,7 @@ end
 """
     vrna_plot_coords_puzzler(structure, x, y, arc_coords, options)
 
- @brief Compute nucleotide coordinates for secondary structure plot using the <i>RNApuzzler</i> algorithm @cite wiegreffe:2018
+ @brief Compute nucleotide coordinates for secondary structure plot using the <i>RNApuzzler</i> algorithm @rstinline :cite:p:`wiegreffe:2018` @endrst
 
  This function basically is a wrapper to vrna_plot_coords() that passes the @p plot_type #VRNA_PLOT_TYPE_PUZZLER.
 
@@ -10882,7 +10875,7 @@ end
 """
     vrna_plot_coords_puzzler_pt(pair_table, x, y, arc_coords, puzzler)
 
- @brief Compute nucleotide coordinates for secondary structure plot using the <i>RNApuzzler</i> algorithm @cite wiegreffe:2018
+ @brief Compute nucleotide coordinates for secondary structure plot using the <i>RNApuzzler</i> algorithm @rstinline :cite:p:`wiegreffe:2018` @endrst
 
  Same as vrna_plot_coords_puzzler() but takes a pair table with the structure
  information as input.
@@ -11034,7 +11027,7 @@ end
 """
     vrna_plot_layout_turtle(structure)
 
- @brief  Create a layout (coordinates, etc.) for a secondary structure plot using the <i>Turtle Algorithm</i> @cite wiegreffe:2018
+ @brief  Create a layout (coordinates, etc.) for a secondary structure plot using the <i>Turtle Algorithm</i> @rstinline :cite:p:`wiegreffe:2018` @endrst
 
  This function basically is a wrapper to vrna_plot_layout() that passes the @p plot_type #VRNA_PLOT_TYPE_TURTLE.
 
@@ -11059,7 +11052,7 @@ end
 """
     vrna_plot_layout_puzzler(structure, options)
 
- @brief  Create a layout (coordinates, etc.) for a secondary structure plot using the <i>RNApuzzler Algorithm</i> @cite wiegreffe:2018
+ @brief  Create a layout (coordinates, etc.) for a secondary structure plot using the <i>RNApuzzler Algorithm</i> @rstinline :cite:p:`wiegreffe:2018` @endrst
 
  This function basically is a wrapper to vrna_plot_layout() that passes the @p plot_type #VRNA_PLOT_TYPE_PUZZLER.
 
@@ -11404,7 +11397,7 @@ const SOLUTION = vrna_subopt_sol_s
  @brief Returns list of subopt structures or writes to fp
 
  This function produces <b>all</b> suboptimal secondary structures within
- 'delta' * 0.01 kcal/mol of the optimum, see @cite wuchty:1999. The results
+ 'delta' * 0.01 kcal/mol of the optimum, see @rstinline :cite:t:`wuchty:1999` @endrst. The results
  are either directly written to a 'fp' (if 'fp' is not NULL), or
  (fp==NULL) returned in a #vrna_subopt_solution_t * list terminated
  by an entry were the 'structure' member is NULL.
@@ -11445,7 +11438,7 @@ end
  @brief  Generate suboptimal structures within an energy band arround the MFE
 
  This is the most generic implementation of the suboptimal structure generator
- according to Wuchty et al. 1999 @cite wuchty:1999. Identical to vrna_subopt(), it computes all
+ according to @rstinline :cite:t:`wuchty:1999` @endrst. Identical to vrna_subopt(), it computes all
  secondary structures within an energy band @p delta arround the MFE. However,
  this function does not print the resulting structures and their corresponding
  free energies to a file pointer, or returns them as a list. Instead, it calls
@@ -11554,7 +11547,7 @@ end
 
  @brief Compute Zuker type suboptimal structures
 
- Compute Suboptimal structures according to M. Zuker @cite zuker:1989 , i.e. for every
+ Compute Suboptimal structures according to @rstinline :cite:t:`zuker:1989` @endrst , i.e. for every
  possible base pair the minimum energy structure containing the resp. base pair.
  Returns a list of these structures and their energies.
 
@@ -12384,6 +12377,8 @@ const VRNA_MOVESET_SHIFT = 16
 const VRNA_MOVESET_NO_LP = 32
 
 const VRNA_MOVESET_DEFAULT = VRNA_MOVESET_INSERTION | VRNA_MOVESET_DELETION
+
+const VRNA_MOVE_NO_APPLY = 64
 
 const VRNA_VERBOSITY_QUIET = -1
 
