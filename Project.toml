@@ -1,7 +1,7 @@
 name = "ViennaRNA"
 uuid = "05a721ad-238d-4945-8c85-8b5c1fff3465"
 authors = ["Marco Matthies <marco.matthies@gmail.com>"]
-version = "0.11.0"
+version = "0.11.1"
 
 [deps]
 CEnum = "fa961155-64e5-5f13-b03f-caf6b980ea82"
@@ -11,10 +11,10 @@ ViennaRNA_jll = "b7a990de-7fa3-5a2e-8a39-d875e4dafecd"
 
 [compat]
 Aqua = "0.6"
-CEnum = "0.4"
+CEnum = "0.5"
 Unitful = "1.9"
 UnsafePointers = "1"
-ViennaRNA_jll = "~2.6.2"
+ViennaRNA_jll = "~2.6.4"
 julia = "1.6"
 
 [extras]
