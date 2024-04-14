@@ -1,0 +1,14 @@
+diff --git a/src/ViennaRNA/constraints/soft_special.h b/src/ViennaRNA/constraints/soft_special.h
+index 1902c930..654bc85e 100644
+--- a/src/ViennaRNA/constraints/soft_special.h
++++ b/src/ViennaRNA/constraints/soft_special.h
+@@ -1,6 +1,9 @@
+ #ifndef VIENNA_RNA_PACKAGE_CONSTRAINTS_SOFT_SPECIAL_H
+ #define VIENNA_RNA_PACKAGE_CONSTRAINTS_SOFT_SPECIAL_H
+ 
++#include "ViennaRNA/fold_compound.h"
++#include "ViennaRNA/model.h"
++
+ /**
+  *  @file     constraints/soft_special.h
+  *  @ingroup  soft_constraints, modified_bases

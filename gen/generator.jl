@@ -5,6 +5,18 @@ import Pkg
 cd(@__DIR__)
 Pkg.activate(".")
 
+function find_files_matching_regex(root_dir::AbstractString, regex::Regex)
+    matching_files = String[]
+    for (root, dirs, files) in walkdir(root_dir)
+        for file in files
+            if occursin(regex, file)
+                push!(matching_files, joinpath(root, file))
+            end
+        end
+    end
+    return matching_files
+end
+
 # Stack environment from parent dir on top of env from this dir.  This
 # is so we can import ViennaRNA_jll and always have the same version
 # as the parent dir.
@@ -37,8 +49,19 @@ open("./prologue.jl", "w") do io
     println(io, "#### end prologue.jl")
 end
 
-include_dir = normpath(ViennaRNA_jll.artifact_dir, "include")
+#include_dir = normpath(ViennaRNA_jll.artifact_dir, "include")
+#viennarna_dir = joinpath(include_dir, "ViennaRNA")
+tmpdir = mktempdir()
+run(`cp -r $(normpath(ViennaRNA_jll.artifact_dir, "include")) $tmpdir/`)
+include_dir = joinpath(tmpdir, "include")
 viennarna_dir = joinpath(include_dir, "ViennaRNA")
+patches_dir = abspath(joinpath("patches-for-headers"))
+patch_files = filter(f -> endswith(f, ".patch"), readdir(patches_dir; join=true))
+cd(include_dir) do
+    for patch in patch_files
+        run(pipeline(`patch -p2`, stdin=patch)) #joinpath(patches_dir, "soft_special_missing_includes.patch")))
+    end
+end
 
 options = load_options(joinpath(@__DIR__, "generator.toml"))
 print("options =\n  ")
@@ -48,6 +71,8 @@ args = get_default_args()
 append!(args, [
     "-I$include_dir",
     "-DVRNA_DISABLE_C11_FEATURES",
+#    "-DVRNA_DISABLE_BACKWARD_COMPATIBILITY",
+#    "-DMAXALPHA=20",
 ])
 
 accept_headers = [
@@ -68,10 +93,17 @@ accept_headers = [
     "subopt_zuker.h",
     "treedist.h",
     "utils/basic.h",
+    "constraints/basic.h",
+    "constraints/hard.h",
+    "constraints/ligand.h",
+    "constraints/SHAPE.h",
+    "constraints/soft.h",
+    "constraints/soft_special.h",
 ]
 headers = [joinpath(viennarna_dir, header) for header in accept_headers]
 # there is also an experimental `detect_headers` function for auto-detecting top-level headers in the directory
-# headers = detect_headers(clang_dir, args)
+#headers = detect_headers(viennarna_dir, args)
+#headers = find_files_matching_regex(viennarna_dir, r".*\.h")
 
 # create context
 ctx = create_context(headers, args, options)
