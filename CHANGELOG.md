@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## 0.12.0
+
+- when building the Julia interface to the ViennaRNA headers, some
+  patches are applied to a temporary copy of the headers before
+  parsing with Clang.jl to fix some parsing bugs (see
+  `gen/patches-for-headers/`).
+
+
+## 0.11.0
+
+- update to ViennaRNA-2.6.x (from 2.5.x)
+
 ## 0.10.0
 
 - Energy parameter sets are now changed by calling functions like
