@@ -1156,7 +1156,9 @@ end
 
 # sc_mod_*! functions for preset (built-in) energy params of modified
 # bases
-for (; short, desc) in Private.SC_MOD_PRESET_FUNCTIONS
+for modfn_data in Private.SC_MOD_PRESET_FUNCTIONS
+    short = modfn_data.short
+    desc = modfn_data.desc
     func_name = Symbol("sc_mod_$(short)!")
     vrna_func_name = Symbol("vrna_sc_mod_$short")
     @eval begin
