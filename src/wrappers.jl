@@ -47,6 +47,17 @@ const SAMPLE_STRUCTURES_OPTIONS = _makedict("VRNA_PBACKTRACK_")
 #     ...
 # )
 
+# data needed to auto-generate wrappers and tests for the
+# vrna_sc_mod_* convenience functions for specific base modifications
+const SC_MOD_PRESET_FUNCTIONS = [
+    (short="m6A",            desc="N6-methyl-adenosine (m6A)",  unmod_base="A"),
+    (short="pseudouridine",  desc="pseudouridine",              unmod_base="U"),
+    (short="inosine",        desc="inosine",                    unmod_base="G"),
+    (short="7DA",            desc="7-deaza-adenosine (7DA)",    unmod_base="A"),
+    (short="purine",         desc="Purine (a.k.a. nebularine)", unmod_base="A"),
+    (short="dihydrouridine", desc="dihydrouridine",             unmod_base="U"),
+]
+
 end # module Private
 import .Private
 
@@ -1138,6 +1149,36 @@ function sample_structures(sequence::AbstractString;
         finalize(fc)
     end
     return res
+end
+
+# soft constraints
+# modified bases via soft constraints functions (vrna_sc_mod_*)
+
+# sc_mod_*! functions for preset (built-in) energy params of modified
+# bases
+for (; short, desc) in Private.SC_MOD_PRESET_FUNCTIONS
+    func_name = Symbol("sc_mod_$(short)!")
+    vrna_func_name = Symbol("vrna_sc_mod_$short")
+    @eval begin
+        @doc """
+            $($func_name)(fc, modification_sites::Vector{<:Integer})
+
+        Apply base modifications for $($desc) at the
+        positions given by `modification_sites` via soft constraint callbacks.
+        """
+        function $func_name(fc::FoldCompound, modification_sites::Vector{T};
+                            option_flags=LibRNA.VRNA_SC_MOD_DEFAULT) where {T<:Integer}
+            # Note: ViennaRNA expects 1-based indexing for modification_sites
+            nsites = length(modification_sites)
+            sites = convert(Vector{Cuint}, modification_sites)
+            push!(sites, 0)  # array needs to be terminated by 0
+            nsites_mod = LibRNA.$vrna_func_name(fc.ptr, sites, option_flags)
+            if nsites_mod != nsites
+                throw(ArgumentError("Modified $nsites_mod positions but expected $nsites"))
+            end
+            return fc
+        end
+    end
 end
 
 # suboptimal structures
