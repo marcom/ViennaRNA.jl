@@ -282,6 +282,33 @@ inverse_pf_fold("AAAAAAA", "((...))")  # => ("GCCAAGC", 2.0244526863098145 kcal 
 ViennaRNA.init_rand_seed(42)
 ```
 
+### Modified bases energy parameter presets
+
+Energy parameters for modified bases can be used via ViennaRNA's soft
+constraints mechanism.
+
+```julia
+using ViennaRNA
+fc = FoldCompound("AAACCCUUU")
+partfn(fc)  # -0.0025467473022687203 kcal mol^-1
+ViennaRNA.sc_mod_pseudouridine!(fc, [7,8,9])  # modify positions 7, 8, 9
+partfn(fc)  # -0.004713416050703315 kcal mol^-1
+```
+
+These functions are currently available:
+```
+sc_mod_7DA!
+sc_mod_dihydrouridine!
+sc_mod_inosine!
+sc_mod_m6A!
+sc_mod_pseudouridine!
+sc_mod_purine!
+```
+Please refer to the
+[ViennaRNA section on modified bases](https://www.tbi.univie.ac.at/RNA/ViennaRNA/doc/html/modified_bases.html)
+for more details.
+
+
 ## Reducing memory usage
 
 When creating many `FoldCompound`s, running `finalize` manually will

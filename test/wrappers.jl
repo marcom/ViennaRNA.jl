@@ -563,6 +563,21 @@ end
 
 end
 
+@testset "sc_mod_*" begin
+    showtestset()
+    n = 5
+    for modfn_data in ViennaRNA.Private.SC_MOD_PRESET_FUNCTIONS
+        short = modfn_data.short
+        unmod_base = modfn_data.unmod_base
+        fc = FoldCompound(unmod_base^n)
+        func_name = Symbol("sc_mod_$(short)!")
+        @eval @test ViennaRNA.$func_name($fc, [1, $n]) isa FoldCompound
+        @eval @test_throws ArgumentError begin
+            ViennaRNA.$func_name($fc, [1, $n + 1]; option_flags=LibRNA.VRNA_SC_MOD_SILENT)
+        end
+    end
+end
+
 @testset "subopt" begin
     showtestset()
     seq = "GGGGGAAAAACCCCCCCCAUUCA"
